@@ -72,9 +72,14 @@ app.get('/api/quotes', async (req, res) => {
 
 // Create a new quote
 app.post('/api/quotes', async (req, res) => {
-    const quote = new Quote(req.body);
-    await quote.save();
-    res.status(201).json(quote);
+    try {
+        const quote = new Quote(req.body);
+        await quote.save();
+        res.status(201).json(quote);
+    } catch (error) {
+        console.error('Error creating quote:', error);
+        res.status(500).json({ error: 'Failed to create quote' });
+    }
 });
 
 app.listen(3000, () => console.log('Server running on port 3000'));

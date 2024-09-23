@@ -85,7 +85,7 @@ function addProductField() {
 }
 
 // Handle quote form submission
-document.getElementById('quote-form').addEventListener('submit', function(e) {
+document.getElementById('quote-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
@@ -98,7 +98,28 @@ document.getElementById('quote-form').addEventListener('submit', function(e) {
     });
     
     console.log('Quote request submitted:', data);
-    // Implement form submission logic here (e.g., send data to server)
+
+    try {
+        const response = await fetch('http://localhost:3000/api/quotes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert('Quote request submitted successfully!');
+            this.reset();
+        } else {
+            const errorData = await response.json();
+            console.error('Failed to submit quote request:', errorData);
+            alert('Failed to submit quote request.');
+        }
+    } catch (error) {
+        console.error('Error submitting quote request:', error);
+        alert('An error occurred while submitting the quote request.');
+    }
 });
 
 // Load products when the page loads
