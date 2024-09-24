@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, getUserProfile } = require('./controller/User');
+const { registerUser, loginUser, getUserProfile } = require('../controller/user'); // Corrected path to the controller
 const router = express.Router();
 
 router.post('/register', registerUser);

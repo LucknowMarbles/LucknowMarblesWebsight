@@ -2,53 +2,25 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
-
+const userRoutes = require('./routes/user');
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Enable CORS for all routes
+const corsOptions = {
+  origin: 'http://localhost:3000', // Allow only this origin
+  credentials: true, // Allow cookies to be sent with requests
+};
+
 app.use(cors(corsOptions));
+app.use(express.json());
 
 // Connect to MongoDB (replace with your connection string)
-mongoose.connect('mongodb://localhost/your_database', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost/your_database', { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-// User model
-const User = mongoose.model('User', {
-  username: String,
-  email: String,
-  password: String
-});
-
-// Signup route
-app.post('/api/signup', async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create new user
-    const user = new User({
-      username,
-      email,
-      password: hashedPassword
-    });
-
-    await user.save();
-
-    res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+// Import and use the user routes
+app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

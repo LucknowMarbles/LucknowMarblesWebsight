@@ -3,6 +3,8 @@ const router = express.Router();
 const { registerUser, loginUser, getUserProfile } = require('./controller/User');
 
 
+
+
 // GET all products
 router.get('/products', getProducts);
 
