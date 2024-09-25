@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css'; // Import the CSS file
 
-const Navbar = () => {
+const Navbar = ({ cart }) => {
   return (
     <nav className="navbar">
       <ul className="navbar-list">
@@ -23,6 +23,11 @@ const Navbar = () => {
         </li>
         <li className="navbar-item">
           <Link to="/admin" className="navbar-link">Admin</Link>
+        </li>
+        <li className="navbar-item">
+          <Link to="/cart" className="navbar-link">
+            🛒 Cart ({cart.length})
+          </Link>
         </li>
       </ul>
     </nav>

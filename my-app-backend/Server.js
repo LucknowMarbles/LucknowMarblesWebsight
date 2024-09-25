@@ -1,8 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const userRoutes = require('./routes/user');
+const productRoutes = require('./routes/Product'); // Import product routes
+const enquiryRoutes = require('./routes/Enquiry');
+const orderRoutes = require('./routes/order'); // Import order routes
 const app = express();
 
 // Enable CORS for all routes
@@ -15,12 +19,15 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Connect to MongoDB (replace with your connection string)
-mongoose.connect('mongodb://localhost/your_database', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Import and use the user routes
 app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes); // Use product routes
+app.use('/api/enquiries', enquiryRoutes);
+app.use('/api/orders', orderRoutes); // Use order routes
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

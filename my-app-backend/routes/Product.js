@@ -1,24 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getUserProfile } = require('./controller/User');
-
-
-
+const productController = require('../controller/productController');
 
 // GET all products
-router.get('/products', getProducts);
+router.get('/', productController.getProducts); // Changed from '/products' to '/'
 
 // GET a single product
-router.get('/:id', getProductById);
-
+router.get('/:id', productController.getProductById);
 
 // POST a new product
-router.post('/', createProduct);
+router.post('/', productController.createProduct); // Removed upload.single('image')
 
 // PUT update a product
-router.put('/:id', updateProduct);
+router.put('/:id', productController.updateProduct);
 
 // DELETE a product
-router.delete('/:id', deleteProduct);
+router.delete('/:id', productController.deleteProduct);
+
+// GET e-commerce products
+router.get('/ecommerce', productController.getEcommerceProducts);
 
 module.exports = router;
+
