@@ -1,3 +1,4 @@
+
 const jwt = require('jsonwebtoken');
 const User = require('../modals/User');
 
@@ -19,3 +20,4 @@ const authMiddleware = async (req, res, next) => {
 };
 
 module.exports = authMiddleware;
+

@@ -6,7 +6,7 @@ const cors = require('cors');
 const userRoutes = require('./routes/user');
 const productRoutes = require('./routes/Product'); // Import product routes
 const enquiryRoutes = require('./routes/Enquiry');
-const orderRoutes = require('./routes/order'); // Import order routes
+const orderRoutes = require('./routes/Order'); // Import order routes
 const app = express();
 
 // Enable CORS for all routes

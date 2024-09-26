@@ -8,8 +8,7 @@ const ShoppingCart = ({ cart, setCart }) => {
     address: ''
   });
 
-  const deliveryCharge = 50; // Fixed delivery charge for Lucknow
-
+  const deliveryCharge = 50;
   const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const totalAmount = subtotal + deliveryCharge;
@@ -22,13 +21,24 @@ const ShoppingCart = ({ cart, setCart }) => {
     e.preventDefault();
     try {
       const orderData = {
-        cart,
+        items: cart,
         userInfo,
         subtotal,
         deliveryCharge,
         totalAmount
       };
-      const response = await axios.post('http://localhost:5001/api/orders', orderData);
+
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {}
+      };
+
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await axios.post('http://localhost:5001/api/orders', orderData, config);
+      console.log('Order placed successfully:', response.data);
       alert('Order placed successfully!');
       setCart([]);
     } catch (error) {

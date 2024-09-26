@@ -5,12 +5,11 @@ import EnquiryForm from '../services/EnquiryForm';
 
 const HomePage = ({ cart, setCart }) => {
   const [products, setProducts] = useState([]);
-  const [ecommerceProducts, setEcommerceProducts] = useState([]);
   const [error, setError] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [showEcommerce, setShowEcommerce] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showEcommerceOnly, setShowEcommerceOnly] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -27,23 +26,6 @@ const HomePage = ({ cart, setCart }) => {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    if (showEcommerce) {
-      const fetchEcommerceProducts = async () => {
-        try {
-          // You would need to get the user's location here
-          const { data } = await axios.get('http://localhost:5001/api/products/ecommerce', {
-            params: { longitude: 80.9462, latitude: 26.8467 } // Coordinates for Lucknow
-          });
-          setEcommerceProducts(data);
-        } catch (error) {
-          console.error('Error fetching e-commerce products:', error);
-        }
-      };
-      fetchEcommerceProducts();
-    }
-  }, [showEcommerce]);
-
   const handleGetQuote = (product) => {
     setSelectedProducts(prevSelected => {
       if (prevSelected.find(p => p._id === product._id)) {
@@ -54,14 +36,20 @@ const HomePage = ({ cart, setCart }) => {
   };
 
   const handleAddToCart = (product) => {
-    setCart(prevCart => [...prevCart, product]);
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item._id === product._id);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
   };
 
-  const filteredProducts = selectedCategory
-    ? products.filter(product => product.category === selectedCategory)
-    : products;
-
-  const displayProducts = showEcommerce ? ecommerceProducts : filteredProducts;
+  const filteredProducts = products
+    .filter(product => !selectedCategory || product.category === selectedCategory)
+    .filter(product => !showEcommerceOnly || product.isEcommerce);
 
   return (
     <div className="home-page">
@@ -77,10 +65,10 @@ const HomePage = ({ cart, setCart }) => {
         <label>
           <input
             type="checkbox"
-            checked={showEcommerce}
-            onChange={() => setShowEcommerce(!showEcommerce)}
+            checked={showEcommerceOnly}
+            onChange={(e) => setShowEcommerceOnly(e.target.checked)}
           />
-          Show E-commerce Products
+          Show E-commerce Products Only
         </label>
       </div>
 
@@ -88,7 +76,7 @@ const HomePage = ({ cart, setCart }) => {
         <div className="error-message">Error: {error}</div>
       ) : (
         <div className="product-grid">
-          {displayProducts.map(product => (
+          {filteredProducts.map(product => (
             <div key={product._id} className="product-card">
               <img src={product.imageUrl} alt={product.name} className="product-image" />
               <h2 className="product-name">{product.name}</h2>

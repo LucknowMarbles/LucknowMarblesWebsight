@@ -5,8 +5,36 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phoneNumber: { type: String }, // New field
+  phoneNumber: { type: String },
   isAdmin: { type: Boolean, default: false },
+  permissions: {
+    viewUsers: { type: Boolean, default: false },
+    editUsers: { type: Boolean, default: false },
+    deleteUsers: { type: Boolean, default: false },
+    changeUserRoles: { type: Boolean, default: false },
+    viewProducts: { type: Boolean, default: false },
+    addProducts: { type: Boolean, default: false },
+    editProducts: { type: Boolean, default: false },
+    deleteProducts: { type: Boolean, default: false },
+    manageCategories: { type: Boolean, default: false },
+    viewOrders: { type: Boolean, default: false },
+    updateOrderStatus: { type: Boolean, default: false },
+    cancelOrders: { type: Boolean, default: false },
+    refundOrders: { type: Boolean, default: false },
+    viewEnquiries: { type: Boolean, default: false },
+    respondToEnquiries: { type: Boolean, default: false },
+    deleteEnquiries: { type: Boolean, default: false },
+    editWebsiteContent: { type: Boolean, default: false },
+    manageBlogPosts: { type: Boolean, default: false },
+    viewSalesReports: { type: Boolean, default: false },
+    viewUserAnalytics: { type: Boolean, default: false },
+    exportData: { type: Boolean, default: false },
+    managePaymentGateways: { type: Boolean, default: false },
+    manageShippingOptions: { type: Boolean, default: false },
+    setSystemPreferences: { type: Boolean, default: false },
+    viewSecurityLogs: { type: Boolean, default: false },
+    manageUserPermissions: { type: Boolean, default: false }
+  }
 });
 
 userSchema.pre('save', async function (next) {
