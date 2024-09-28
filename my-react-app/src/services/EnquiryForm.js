@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import '../EnquiryForm.css';
 
-const EnquiryForm = ({ selectedProducts = [] }) => {
+const predefinedPurposes = [
+  'Kitchen top or table',
+  'Stairs',
+  'Flooring',
+  'Dahal'
+];
+
+const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -17,8 +25,7 @@ const EnquiryForm = ({ selectedProducts = [] }) => {
         products: selectedProducts.map(product => ({
           product: product._id,
           quantity: 1,
-          purposeOfUse: '',
-          dimensions: []
+          purposes: product.purposes || []
         }))
       }));
     }
@@ -28,39 +35,34 @@ const EnquiryForm = ({ selectedProducts = [] }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleProductChange = (index, field, value) => {
+  const handleProductQuantityChange = (productId, quantity) => {
     setFormData(prevData => ({
       ...prevData,
-      products: prevData.products.map((p, i) => 
-        i === index ? { ...p, [field]: value } : p
+      products: prevData.products.map(p => 
+        p.product === productId ? { ...p, quantity: parseInt(quantity) } : p
       )
     }));
   };
 
-  const handlePurposeChange = (index, value) => {
-    handleProductChange(index, 'purposeOfUse', value);
-    handleProductChange(index, 'dimensions', []);
-  };
-
-  const addDimension = (productIndex) => {
-    setFormData(prevData => ({
-      ...prevData,
-      products: prevData.products.map((p, i) => 
-        i === productIndex ? { ...p, dimensions: [...p.dimensions, {}] } : p
-      )
-    }));
-  };
-
-  const updateDimension = (productIndex, dimensionIndex, field, value) => {
+  const handlePurposeChange = (productIndex, purposeIndex, field, value) => {
     setFormData(prevData => ({
       ...prevData,
       products: prevData.products.map((p, i) => 
         i === productIndex ? {
           ...p,
-          dimensions: p.dimensions.map((d, j) => 
-            j === dimensionIndex ? { ...d, [field]: value } : d
+          purposes: p.purposes.map((purpose, j) => 
+            j === purposeIndex ? { ...purpose, [field]: value } : purpose
           )
         } : p
+      )
+    }));
+  };
+
+  const addPurpose = (productIndex) => {
+    setFormData(prevData => ({
+      ...prevData,
+      products: prevData.products.map((p, i) => 
+        i === productIndex ? { ...p, purposes: [...p.purposes, { purposeOfUse: '', dimensions: { length: '', width: '', height: '' } }] } : p
       )
     }));
   };
@@ -78,6 +80,7 @@ const EnquiryForm = ({ selectedProducts = [] }) => {
         message: '',
         products: []
       });
+      setSelectedProducts([]);
       alert('Enquiry submitted successfully!');
     } catch (error) {
       console.error('Error submitting enquiry:', error);
@@ -85,94 +88,94 @@ const EnquiryForm = ({ selectedProducts = [] }) => {
     }
   };
 
-  const renderDimensionInputs = (productIndex, purposeOfUse, dimensions) => {
-    switch (purposeOfUse) {
+  const renderDimensionInputs = (purpose, productIndex, purposeIndex) => {
+    switch (purpose.purposeOfUse) {
       case 'Kitchen top or table':
-        return dimensions.map((dim, index) => (
-          <div key={index}>
+        return (
+          <div key={purposeIndex}>
             <input
               type="number"
               placeholder="Length"
-              value={dim.length || ''}
-              onChange={(e) => updateDimension(productIndex, index, 'length', e.target.value)}
+              value={purpose.dimensions.length || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, length: e.target.value })}
             />
             <input
               type="number"
               placeholder="Width"
-              value={dim.width || ''}
-              onChange={(e) => updateDimension(productIndex, index, 'width', e.target.value)}
+              value={purpose.dimensions.width || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, width: e.target.value })}
             />
           </div>
-        ));
+        );
       case 'Stairs':
         return (
-          <div>
+          <div key={purposeIndex}>
             <input
               type="number"
               placeholder="Riser Length"
-              value={dimensions[0]?.riserLength || ''}
-              onChange={(e) => updateDimension(productIndex, 0, 'riserLength', e.target.value)}
+              value={purpose.dimensions.riserLength || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, riserLength: e.target.value })}
             />
             <input
               type="number"
               placeholder="Riser Width"
-              value={dimensions[0]?.riserWidth || ''}
-              onChange={(e) => updateDimension(productIndex, 0, 'riserWidth', e.target.value)}
+              value={purpose.dimensions.riserWidth || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, riserWidth: e.target.value })}
             />
             <input
               type="number"
               placeholder="Step Length"
-              value={dimensions[0]?.stepLength || ''}
-              onChange={(e) => updateDimension(productIndex, 0, 'stepLength', e.target.value)}
+              value={purpose.dimensions.stepLength || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, stepLength: e.target.value })}
             />
             <input
               type="number"
               placeholder="Step Width"
-              value={dimensions[0]?.stepWidth || ''}
-              onChange={(e) => updateDimension(productIndex, 0, 'stepWidth', e.target.value)}
+              value={purpose.dimensions.stepWidth || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, stepWidth: e.target.value })}
             />
           </div>
         );
       case 'Flooring':
         return (
-          <div>
+          <div key={purposeIndex}>
             <input
               type="number"
               placeholder="Length"
-              value={dimensions[0]?.length || ''}
-              onChange={(e) => updateDimension(productIndex, 0, 'length', e.target.value)}
+              value={purpose.dimensions.length || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, length: e.target.value })}
             />
             <input
               type="number"
               placeholder="Width"
-              value={dimensions[0]?.width || ''}
-              onChange={(e) => updateDimension(productIndex, 0, 'width', e.target.value)}
+              value={purpose.dimensions.width || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, width: e.target.value })}
             />
           </div>
         );
       case 'Dahal':
-        return dimensions.map((dim, index) => (
-          <div key={index}>
+        return (
+          <div key={purposeIndex}>
             <input
               type="number"
               placeholder="Width"
-              value={dim.width || ''}
-              onChange={(e) => updateDimension(productIndex, index, 'width', e.target.value)}
+              value={purpose.dimensions.width || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, width: e.target.value })}
             />
             <input
               type="number"
               placeholder="Height"
-              value={dim.height || ''}
-              onChange={(e) => updateDimension(productIndex, index, 'height', e.target.value)}
+              value={purpose.dimensions.height || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, height: e.target.value })}
             />
             <input
               type="number"
               placeholder="Running Fit"
-              value={dim.runningFit || ''}
-              onChange={(e) => updateDimension(productIndex, index, 'runningFit', e.target.value)}
+              value={purpose.dimensions.runningFit || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, runningFit: e.target.value })}
             />
           </div>
-        ));
+        );
       default:
         return null;
     }
@@ -213,41 +216,38 @@ const EnquiryForm = ({ selectedProducts = [] }) => {
       ></textarea>
       
       <h3>Selected Products</h3>
-      {formData.products.map((productData, index) => {
+      {formData.products.map((productData, productIndex) => {
         const product = selectedProducts.find(p => p._id === productData.product);
         return (
-          <div key={index} className="selected-product">
+          <div key={productIndex} className="selected-product">
             <p>{product.name} - ${product.price}</p>
             <input
               type="number"
               min="1"
               value={productData.quantity}
-              onChange={(e) => handleProductChange(index, 'quantity', parseInt(e.target.value))}
+              onChange={(e) => handleProductQuantityChange(productData.product, e.target.value)}
             />
-            <select 
-              value={productData.purposeOfUse} 
-              onChange={(e) => handlePurposeChange(index, e.target.value)}
-              required
-            >
-              <option value="">Select Purpose of Use</option>
-              <option value="Kitchen top or table">Kitchen top or table</option>
-              <option value="Stairs">Stairs</option>
-              <option value="Flooring">Flooring</option>
-              <option value="Dahal">Dahal</option>
-            </select>
-            {productData.purposeOfUse && (
-              <div>
-                <h4>Dimensions</h4>
-                {renderDimensionInputs(index, productData.purposeOfUse, productData.dimensions)}
-                {(productData.purposeOfUse === 'Kitchen top or table' || productData.purposeOfUse === 'Dahal') && (
-                  <button type="button" onClick={() => addDimension(index)}>Add Another Piece</button>
-                )}
+            <h4>Purposes</h4>
+            {productData.purposes.map((purpose, purposeIndex) => (
+              <div key={purposeIndex} className="purpose-section">
+                <select
+                  value={purpose.purposeOfUse}
+                  onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'purposeOfUse', e.target.value)}
+                  required
+                >
+                  <option value="">Select Purpose of Use</option>
+                  {predefinedPurposes.map(purpose => (
+                    <option key={purpose} value={purpose}>{purpose}</option>
+                  ))}
+                </select>
+                {renderDimensionInputs(purpose, productIndex, purposeIndex)}
               </div>
-            )}
+            ))}
+            <button type="button" className="add-purpose-btn" onClick={() => addPurpose(productIndex)}>Add Another Purpose</button>
           </div>
         );
       })}
-
+      
       <button type="submit" className="submit-enquiry-btn">Submit Enquiry</button>
     </form>
   );

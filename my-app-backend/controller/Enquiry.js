@@ -3,9 +3,7 @@ const Enquiry = require('../modals/Enquiry');
 const createEnquiry = async (req, res) => {
   try {
     const {
-      username,
-      email,
-      phoneNumber,
+     userId,
       message,
       products,
       purposeOfUse,
@@ -13,9 +11,7 @@ const createEnquiry = async (req, res) => {
     } = req.body;
 
     const newEnquiry = new Enquiry({
-      username,
-      email,
-      phoneNumber,
+      userId,
       message,
       products,
       purposeOfUse,

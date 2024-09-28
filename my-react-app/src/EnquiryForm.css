@@ -1,0 +1,91 @@
+.enquiry-form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 20px;
+  }
+  
+  .enquiry-form h2 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .form-group textarea {
+    resize: vertical;
+  }
+  
+  .error-message,
+  .success-message {
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .error-message {
+    background-color: #ff6b6b;
+    color: white;
+  }
+  
+  .success-message {
+    background-color: #4caf50;
+    color: white;
+  }
+  
+  .selected-product {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+  }
+  
+  .purpose-section {
+    margin-bottom: 15px;
+  }
+  
+  .dimension-inputs {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .dimension-inputs input {
+    flex: 1;
+  }
+  
+  .add-purpose-btn,
+  .submit-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .add-purpose-btn:hover,
+  .submit-btn:hover {
+    background-color: #2980b9;
+  }

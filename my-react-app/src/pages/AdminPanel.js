@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import '../AdminPanal.css';
+import UploadExcel from '../components/UploadExcel';
+import GenerateInvoice from '../components/GenerateInvoice';
 
 const AdminPanel = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -9,6 +12,9 @@ const AdminPanel = () => {
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('users');
   const navigate = useNavigate();
+  const [pieces, setPieces] = useState([]);
+  const [batchNo, setBatchNo] = useState('');
+  const [productId, setProductId] = useState('');
 
   const [product, setProduct] = useState({
     name: '',
@@ -24,6 +30,28 @@ const AdminPanel = () => {
   });
   const [enquiries, setEnquiries] = useState([]);
   const [error, setError] = useState(null);
+
+  const [expandedPermissions, setExpandedPermissions] = useState({});
+
+  const togglePermissionCategory = (userId, category) => {
+    setExpandedPermissions(prev => ({
+      ...prev,
+      [userId]: {
+        ...prev[userId],
+        [category]: !prev[userId]?.[category]
+      }
+    }));
+  };
+
+  const permissionCategories = {
+    'User Management': ['viewUsers', 'editUsers', 'deleteUsers', 'changeUserRoles'],
+    'Product Management': ['viewProducts', 'addProducts', 'editProducts', 'deleteProducts', 'manageCategories'],
+    'Order Management': ['viewOrders', 'updateOrderStatus', 'cancelOrders', 'refundOrders'],
+    'Enquiry Management': ['viewEnquiries', 'respondToEnquiries', 'deleteEnquiries'],
+    'Content Management': ['editWebsiteContent', 'manageBlogPosts'],
+    'Analytics & Reporting': ['viewSalesReports', 'viewUserAnalytics', 'exportData'],
+    'System Configuration': ['managePaymentGateways', 'manageShippingOptions', 'setSystemPreferences', 'viewSecurityLogs', 'manageUserPermissions']
+  };
 
   useEffect(() => {
     checkAdminStatus();
@@ -90,6 +118,18 @@ const AdminPanel = () => {
       fetchUsers(); // Refresh user list
     } catch (error) {
       console.error('Error updating user permissions:', error);
+    }
+  };
+
+  const updateUserType = async (userId, isCustomer) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`http://localhost:5001/api/users/${userId}/type`, { isCustomer }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchUsers(); // Refresh user list
+    } catch (error) {
+      console.error('Error updating user type:', error);
     }
   };
 
@@ -167,6 +207,40 @@ const AdminPanel = () => {
       setLoading(false);
     }
   };
+  const fetchPieces = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:5001/api/pieces?batchNo=${batchNo}&productId=${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPieces(response.data);
+    } catch (error) {
+      console.error('Error fetching pieces:', error);
+    }
+  };
+  const updateEnquiryProductNo = async (pieceId, enquiryProductNo) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`http://localhost:5001/api/pieces/${pieceId}`, 
+        { enquiryProductNo },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchPieces(); // Refresh the pieces list
+    } catch (error) {
+      console.error('Error updating enquiry product number:', error);
+    }
+  };
+  useEffect(() => {
+    if (activeTab === 'pieces') {
+      fetchPieces();
+    }
+  }, [activeTab, batchNo, productId]);
+
+  useEffect(() => {
+    if (activeTab === 'enquiries') {
+      fetchEnquiries();
+    }
+  }, [activeTab]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -181,11 +255,73 @@ const AdminPanel = () => {
       <h1>Admin Panel</h1>
       
       <div className="admin-tabs">
+        <button onClick={() => setActiveTab('pieces')}>Pieces Balance Enquiry Products</button>
         <button onClick={() => setActiveTab('users')}>Users</button>
         <button onClick={() => setActiveTab('products')}>Products</button>
         <button onClick={() => setActiveTab('orders')}>Orders</button>
         <button onClick={() => setActiveTab('enquiries')}>Enquiries</button>
+        <button onClick={() => setActiveTab('uploadPurchase')}>Upload Purchase Data</button>
+        <button onClick={() => setActiveTab('uploadSale')}>Upload Sale Data</button>
+        <button onClick={() => setActiveTab('generateInvoice')}>Generate Invoice</button>
       </div>
+      {activeTab === 'pieces' && (
+        <div className="pieces-section">
+          <h2>Pieces</h2>
+          <div className="filter-inputs">
+            <input
+              type="text"
+              placeholder="Batch No"
+              value={batchNo}
+              onChange={(e) => setBatchNo(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Product ID"
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
+            />
+            <button onClick={fetchPieces}>Filter</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Batch No</th>
+                <th>Piece No</th>
+                <th>Product</th>
+                <th>Customer Length</th>
+                <th>Customer Width</th>
+                <th>Trader Length</th>
+                <th>Trader Width</th>
+                <th>Thickness</th>
+                <th>Is Defective</th>
+                <th>Enquiry Product No</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pieces.map((piece) => (
+                <tr key={piece._id}>
+                  <td>{piece.batchNo}</td>
+                  <td>{piece.pieceNo}</td>
+                  <td>{piece.purchaseId?.name || 'N/A'}</td>
+                  <td>{piece.customerLength}</td>
+                  <td>{piece.customerWidth}</td>
+                  <td>{piece.traderLength}</td>
+                  <td>{piece.traderWidth}</td>
+                  <td>{piece.thickness}</td>
+                  <td>{piece.isDefective ? 'Yes' : 'No'}</td>
+                  <td>
+                    <input
+                      type="text"
+                      value={piece.enquiryProductNo || ''}
+                      onChange={(e) => updateEnquiryProductNo(piece._id, e.target.value)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {activeTab === 'users' && (
         <div className="users-section">
@@ -196,32 +332,10 @@ const AdminPanel = () => {
                 <th>Username</th>
                 <th>Email</th>
                 <th>Admin</th>
-                <th>View Users</th>
-                <th>Edit Users</th>
-                <th>Delete Users</th>
-                <th>Change User Roles</th>
-                <th>View Products</th>
-                <th>Add Products</th>
-                <th>Edit Products</th>
-                <th>Delete Products</th>
-                <th>Manage Categories</th>
-                <th>View Orders</th>
-                <th>Update Order Status</th>
-                <th>Cancel Orders</th>
-                <th>Refund Orders</th>
-                <th>View Enquiries</th>
-                <th>Respond to Enquiries</th>
-                <th>Delete Enquiries</th>
-                <th>Edit Website Content</th>
-                <th>Manage Blog Posts</th>
-                <th>View Sales Reports</th>
-                <th>View User Analytics</th>
-                <th>Export Data</th>
-                <th>Manage Payment Gateways</th>
-                <th>Manage Shipping Options</th>
-                <th>Set System Preferences</th>
-                <th>View Security Logs</th>
-                <th>Manage User Permissions</th>
+                <th>Customer</th>
+                {Object.keys(permissionCategories).map(category => (
+                  <th key={category}>{category}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -236,14 +350,33 @@ const AdminPanel = () => {
                       onChange={() => updateUserPermissions(user._id, 'isAdmin', !user.isAdmin)}
                     />
                   </td>
-                  {Object.keys(user.permissions).map(permission => (
-                    <td key={permission}>
-                      <input 
-                        type="checkbox" 
-                        checked={user.isAdmin || user.permissions[permission]}
-                        onChange={() => updateUserPermissions(user._id, permission, !user.permissions[permission])}
-                        disabled={user.isAdmin}
-                      />
+                  <td>
+                    <input 
+                      type="checkbox" 
+                      checked={user.isCustomer} 
+                      onChange={() => updateUserType(user._id, !user.isCustomer)}
+                    />
+                  </td>
+                  {Object.entries(permissionCategories).map(([category, permissions]) => (
+                    <td key={category}>
+                      <button onClick={() => togglePermissionCategory(user._id, category)} className="permission-dropdown">
+                        {expandedPermissions[user._id]?.[category] ? '▼' : '▶'} {category}
+                      </button>
+                      {expandedPermissions[user._id]?.[category] && (
+                        <div className="permission-list">
+                          {permissions.map(permission => (
+                            <label key={permission}>
+                              <input 
+                                type="checkbox" 
+                                checked={user.isAdmin || user.permissions[permission]}
+                                onChange={() => updateUserPermissions(user._id, permission, !user.permissions[permission])}
+                                disabled={user.isAdmin}
+                              />
+                              {permission}
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -453,6 +586,33 @@ const AdminPanel = () => {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {activeTab === 'uploadPurchase' && (
+        <div className="upload-purchase-section">
+          <h2>Upload Purchase Data</h2>
+          <UploadExcel 
+            url="http://localhost:5001/api/pieces/upload-purchase"
+            onSuccess={() => alert('Purchase data uploaded successfully')}
+          />
+        </div>
+      )}
+
+      {activeTab === 'uploadSale' && (
+        <div className="upload-sale-section">
+          <h2>Upload Sale Data</h2>
+          <UploadExcel 
+            url="http://localhost:5001/api/pieces/upload-sale"
+            onSuccess={() => alert('Sale data uploaded successfully')}
+          />
+        </div>
+      )}
+
+      {activeTab === 'generateInvoice' && (
+        <div className="generate-invoice-section">
+          <h2>Generate Invoice</h2>
+          <GenerateInvoice />
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@
    const jwt = require('jsonwebtoken');
  
    const registerUser = async (req, res) => {
-     const { username, email, password, adminSecret } = req.body;
+     const { username, email, password, adminSecret, isCustomer } = req.body;
      try {
        // Check if user already exists
        const existingUser = await User.findOne({ email });
@@ -21,13 +21,28 @@
          username, 
          email, 
          password: hashedPassword, 
-         isAdmin 
+         isAdmin,
+         isCustomer: isCustomer !== undefined ? isCustomer : true // Default to true if not specified
        });
+
+       // Set permissions based on user type
+       if (isAdmin) {
+         Object.keys(user.permissions).forEach(permission => {
+           user.permissions[permission] = true;
+         });
+       } else if (!isCustomer) {
+         // For non-admin, non-customer users, you might want to set specific permissions
+         // This is just an example, adjust as needed
+         user.permissions.viewProducts = true;
+         user.permissions.placeOrder = true;
+         user.permissions.submitEnquiry = true;
+         // Add any other default permissions for non-customer users
+       }
 
        // Save user to database
        await user.save();
 
-       res.status(201).json({ message: 'User registered successfully', isAdmin });
+       res.status(201).json({ message: 'User registered successfully', isAdmin, isCustomer: user.isCustomer });
      } catch (error) {
        console.error('Registration error:', error);
        res.status(400).json({ error: error.message });

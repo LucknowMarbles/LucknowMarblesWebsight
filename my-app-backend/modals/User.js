@@ -4,15 +4,19 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String },
   phoneNumber: { type: String },
   isAdmin: { type: Boolean, default: false },
+  isCustomer: { type: Boolean, default: true }, // New field
   permissions: {
+    viewProducts: { type: Boolean, default: true }, // Customers can view products
+    placeOrder: { type: Boolean, default: true }, // Customers can place orders
+    submitEnquiry: { type: Boolean, default: true }, // Customers can submit enquiries
+    // ... other permissions (set to false by default)
     viewUsers: { type: Boolean, default: false },
     editUsers: { type: Boolean, default: false },
     deleteUsers: { type: Boolean, default: false },
     changeUserRoles: { type: Boolean, default: false },
-    viewProducts: { type: Boolean, default: false },
     addProducts: { type: Boolean, default: false },
     editProducts: { type: Boolean, default: false },
     deleteProducts: { type: Boolean, default: false },

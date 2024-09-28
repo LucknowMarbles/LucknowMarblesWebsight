@@ -7,6 +7,8 @@ const userRoutes = require('./routes/user');
 const productRoutes = require('./routes/Product'); // Import product routes
 const enquiryRoutes = require('./routes/Enquiry');
 const orderRoutes = require('./routes/Order'); // Import order routes
+const pieceRoutes = require('./routes/Piece');
+
 const app = express();
 
 // Enable CORS for all routes
@@ -28,6 +30,13 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes); // Use product routes
 app.use('/api/enquiries', enquiryRoutes);
 app.use('/api/orders', orderRoutes); // Use order routes
+app.use('/api/pieces', pieceRoutes);
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error:', err);
+  res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
+});
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -31,7 +31,7 @@ const HomePage = ({ cart, setCart }) => {
       if (prevSelected.find(p => p._id === product._id)) {
         return prevSelected;
       }
-      return [...prevSelected, product];
+      return [...prevSelected, { ...product, purposes: [] }];
     });
   };
 
@@ -98,7 +98,7 @@ const HomePage = ({ cart, setCart }) => {
           ))}
         </div>
       )}
-      <EnquiryForm selectedProducts={selectedProducts} />
+      <EnquiryForm selectedProducts={selectedProducts} setSelectedProducts={setSelectedProducts} />
     </div>
   );
 };
