@@ -1,4 +1,5 @@
    const User = require('../modals/User'); // Corrected path to the User model
+   const Customer = require('../modals/Customer');
    const bcrypt = require('bcryptjs');
    const jwt = require('jsonwebtoken');
  
@@ -49,51 +50,36 @@
      }
    };
 
-   
-
    const loginUser = async (req, res) => {
-     console.log('Received login request:', req.body);
-     const { email, password } = req.body;
-     try {
-       if (!email || !password) {
-         console.log('Missing email or password');
-         return res.status(400).json({ error: 'Email and password are required' });
-       }
-
-       console.log('Login attempt:', email);
-
-       // Find user by email
-       const user = await User.findOne({ email });
-       if (!user) {
-         console.log('User not found for email:', email);
-         return res.status(400).json({ error: 'Invalid email or password' });
-       }
-
-       console.log('User found:', user.email);
-
-       // Compare passwords
-       const isMatch = await bcrypt.compare(password, user.password);
-       if (!isMatch) {
-         console.log('Password does not match for user:', email);
-         return res.status(400).json({ error: 'Invalid email or password' });
-       }
-
-       // Generate JWT
-       const token = jwt.sign(
-         { id: user._id, isAdmin: user.isAdmin }, 
-         process.env.JWT_SECRET, 
-         { expiresIn: '1h' }
-       );
-
-       console.log('Login successful for user:', email);
-
-       res.json({ token, isAdmin: user.isAdmin, message: 'Login successful' });
-     } catch (error) {
-       console.error('Error during login:', error);
-       res.status(400).json({ error: error.message });
-     }
-   };
-
+    const { email, password } = req.body;
+    try {
+      const customer = await Customer.findOne({ email });
+      if (!customer) {
+        return res.status(400).json({ error: 'Invalid email or password' });
+      }
+  
+      const user = await User.findOne({ customer: customer._id });
+      if (!user) {
+        return res.status(400).json({ error: 'Please set a password to login' });
+      }
+  
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Invalid email or password' });
+      }
+  
+      const token = jwt.sign(
+        { id: user._id, customerId: customer._id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+  
+      res.json({ token, isAdmin: user.isAdmin, message: 'Login successful' });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  };
    const getUserProfile = async (req, res) => {
      try {
        const token = req.header('Authorization').replace('Bearer ', '');
@@ -193,8 +179,61 @@
        res.status(500).json({ error: 'Error fetching users' });
      }
    };
+   const createCustomer = async (req, res) => {
+    const { username, email, phoneNumber } = req.body;
+    try {
+      const existingCustomer = await Customer.findOne({ $or: [{ email }, { phoneNumber }] });
+      if (existingCustomer) {
+        return res.status(400).json({ error: 'Customer already exists' });
+      }
+  
+      const customer = new Customer({ username, email, phoneNumber });
+      await customer.save();
+  
+      res.status(201).json({ message: 'Customer created successfully', customer });
+    } catch (error) {
+      console.error('Customer creation error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  };
+
+  const convertToUser = async (req, res) => {
+    const { customerId, password } = req.body;
+    try {
+      const customer = await Customer.findById(customerId);
+      if (!customer) {
+        return res.status(404).json({ error: 'Customer not found' });
+      }
+  
+      const existingUser = await User.findOne({ customer: customerId });
+      if (existingUser) {
+        return res.status(400).json({ error: 'User already exists for this customer' });
+      }
+  
+      const user = new User({
+        customer: customerId,
+        password,
+        isAdmin: false,
+        permissions: {
+          viewProducts: true,
+        placeOrder: true,
+        submitEnquiry: true,
+        // Set other permissions as needed
+      }
+    });
+
+    await user.save();
+
+    res.status(201).json({ message: 'Customer converted to user successfully', user });
+  } catch (error) {
+    console.error('Conversion error:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
 
    module.exports = { 
+     createCustomer,
+     convertToUser,
      registerUser, 
      loginUser, 
      getUserProfile, 

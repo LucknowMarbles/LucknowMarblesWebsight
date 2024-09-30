@@ -1,6 +1,8 @@
 const express = require('express');
 const { 
   registerUser, 
+  createCustomer,
+  convertToUser,
   loginUser, 
   getUserProfile, 
   checkUser, 
@@ -25,7 +27,8 @@ router.put('/:id/permissions', authMiddleware, adminMiddleware, updateUserPermis
 router.put('/:userId/permissions', authMiddleware, adminMiddleware, updateUserPermissions);
 router.put('/:userId/approve', authMiddleware, adminMiddleware, approveUser);
 router.put('/:userId/disapprove', authMiddleware, adminMiddleware, disapproveUser);
-
+router.post('/create-customer', createCustomer);
+router.post('/convert-to-user', convertToUser);
 router.get('/all', getAllUsers); // Add this line to create the route
 
 router.put('/:userId/type', authMiddleware, adminMiddleware, async (req, res) => {

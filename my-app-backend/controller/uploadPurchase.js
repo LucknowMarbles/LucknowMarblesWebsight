@@ -1,7 +1,11 @@
 const express = require('express');
 const multer = require('multer');
 const xlsx = require('xlsx');
+const readXlsxFile = require('read-excel-file/node');
 const Piece = require('../modals/Piece');
+const Purchase = require('../modals/Purchase');
+
+const mongoose = require('mongoose');
 const router = express.Router();
 
 // Configure multer for memory storage
@@ -12,24 +16,50 @@ const uploadPurchase = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
+    //console.log('File received:', req.file);
+    //console.log('File buffer length:', req.file.buffer.length);
 
-    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(sheet);
+    // Change this line
+    const workbook = await readXlsxFile(req.file.buffer);
+    //console.log(workbook);
+    //console.log('Sheet names:', workbook);
 
-    const pieces = data.map(row => ({
-      batchNo: row['Batch No'],
-      pieceNo: row['Piece No'],
-      customerLength: row['Customer Length'],
-      customerWidth: row['Customer Width'],
-      traderLength: row['Trader Length'],
-      traderWidth: row['Trader Width'],
-      thickness: row['Thickness'],
-      isDefective: row['Is Defective'].toLowerCase() === 'yes',
-      purchaseId: row['Purchase ID'],
-      purchaseBillNo: row['Purchase Bill No']
+    // Remove or comment out these lines as they're not applicable
+    // if (workbook.SheetNames.length === 0) {
+    //   return res.status(400).json({ message: 'No sheets found in the uploaded file' });
+    // }
+    // 
+    // const sheetName = workbook.SheetNames[0];
+    // const sheet = workbook.Sheets[sheetName];
+
+
+
+    if (workbook.length === 0) {
+      return res.status(400).json({ message: 'No sheets found in the uploaded file' });
+    }
+    const sheet = workbook;
+    //const data = xlsx.utils.sheet_to_json(sheet);
+    const purchase = sheet.map(row => 
+        Purchase({
+        purchaseDate: new Date(),
+        supplier: row[11],
+        billNumber: row[12],
+        totalAmount: 0,
+        paymentMethod: row[13]}));
+    const pieces = sheet.map((row,i) => ({
+      batchNo: row[0],
+      pieceNo: row[1],
+      customerLength: parseInt(row[2]),
+      customerWidth: parseInt(row[3]),
+      traderLength: parseInt(row[4]),
+      traderWidth: parseInt(row[5]),
+      thickness: parseInt(row[6]),
+      isDefective: row[7].toLowerCase() === 'yes',
+      purchaseId: purchase[i]._id,
+      purchaseBillNo: row[9],
+      enquiryProductNo: row[10] 
     }));
+    
 
     console.log('Processed pieces:', pieces); // Log the processed data
 
@@ -37,8 +67,8 @@ const uploadPurchase = async (req, res) => {
 
     res.status(200).json({ message: 'Purchase data uploaded successfully', count: pieces.length });
   } catch (error) {
-    console.error('Error uploading purchase data:', error);
-    res.status(500).json({ message: 'Error uploading purchase data', error: error.message });
+    console.error('Error in uploadPurchase:', error);
+    res.status(500).json({ message: 'Error uploading purchase data', error: error.toString() });
   }
 };
 

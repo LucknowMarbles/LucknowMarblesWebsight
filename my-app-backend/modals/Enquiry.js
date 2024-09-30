@@ -19,7 +19,7 @@ const productEnquirySchema = new mongoose.Schema({
 }, { _id: false });
 
 const enquirySchema = new mongoose.Schema({
- user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
   message: { type: String },
   products: [productEnquirySchema],
   createdAt: { type: Date, default: Date.now }

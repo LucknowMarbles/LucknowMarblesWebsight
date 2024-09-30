@@ -2,12 +2,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String },
-  phoneNumber: { type: String },
+  customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
+  password: { type: String, required: true },
   isAdmin: { type: Boolean, default: false },
-  isCustomer: { type: Boolean, default: true }, // New field
   permissions: {
     viewProducts: { type: Boolean, default: true }, // Customers can view products
     placeOrder: { type: Boolean, default: true }, // Customers can place orders
@@ -39,18 +36,18 @@ const userSchema = new mongoose.Schema({
     viewSecurityLogs: { type: Boolean, default: false },
     manageUserPermissions: { type: Boolean, default: false }
   }
-});
+}, { timestamps: true });
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
+userSchema.pre('save', async function(next) {
+  if (this.isModified('password')) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
 const User = mongoose.model('User', userSchema);
+
 module.exports = User;
 
 

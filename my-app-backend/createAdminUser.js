@@ -2,6 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('./modals/User');
+const Customer = require('./modals/Customer');
 
 const createAdminUser = async () => {
   try {
@@ -16,15 +17,49 @@ const createAdminUser = async () => {
       return;
     }
 
-    // Create admin user
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('adminpassword', salt);
-
-    const adminUser = new User({
-      username: 'admin',
+    // Create admin customer
+    const adminCustomer = new Customer({
+      username: 'Admin',
       email: 'admin@example.com',
-      password: 'adminpassword',
-      isAdmin: true
+      phoneNumber: '1234567890'
+    });
+    await adminCustomer.save();
+
+    // Create admin user
+    const adminUser = new User({
+      customer: adminCustomer._id,
+      password: 'adminpassword', // This will be hashed by the pre-save hook
+      isAdmin: true,
+      permissions: {
+        viewProducts: true,
+        placeOrder: true,
+        submitEnquiry: true,
+        viewUsers: true,
+        editUsers: true,
+        deleteUsers: true,
+        changeUserRoles: true,
+        addProducts: true,
+        editProducts: true,
+        deleteProducts: true,
+        manageCategories: true,
+        viewOrders: true,
+        updateOrderStatus: true,
+        cancelOrders: true,
+        refundOrders: true,
+        viewEnquiries: true,
+        respondToEnquiries: true,
+        deleteEnquiries: true,
+        editWebsiteContent: true,
+        manageBlogPosts: true,
+        viewSalesReports: true,
+        viewUserAnalytics: true,
+        exportData: true,
+        managePaymentGateways: true,
+        manageShippingOptions: true,
+        setSystemPreferences: true,
+        viewSecurityLogs: true,
+        manageUserPermissions: true
+      }
     });
 
     await adminUser.save();

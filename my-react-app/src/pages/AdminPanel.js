@@ -213,9 +213,10 @@ const AdminPanel = () => {
       const response = await axios.get(`http://localhost:5001/api/pieces?batchNo=${batchNo}&productId=${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPieces(response.data);
+      setPieces(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching pieces:', error);
+      setPieces([]);
     }
   };
   const updateEnquiryProductNo = async (pieceId, enquiryProductNo) => {
@@ -282,44 +283,48 @@ const AdminPanel = () => {
             />
             <button onClick={fetchPieces}>Filter</button>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Batch No</th>
-                <th>Piece No</th>
-                <th>Product</th>
-                <th>Customer Length</th>
-                <th>Customer Width</th>
-                <th>Trader Length</th>
-                <th>Trader Width</th>
-                <th>Thickness</th>
-                <th>Is Defective</th>
-                <th>Enquiry Product No</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pieces.map((piece) => (
-                <tr key={piece._id}>
-                  <td>{piece.batchNo}</td>
-                  <td>{piece.pieceNo}</td>
-                  <td>{piece.purchaseId?.name || 'N/A'}</td>
-                  <td>{piece.customerLength}</td>
-                  <td>{piece.customerWidth}</td>
-                  <td>{piece.traderLength}</td>
-                  <td>{piece.traderWidth}</td>
-                  <td>{piece.thickness}</td>
-                  <td>{piece.isDefective ? 'Yes' : 'No'}</td>
-                  <td>
-                    <input
-                      type="text"
-                      value={piece.enquiryProductNo || ''}
-                      onChange={(e) => updateEnquiryProductNo(piece._id, e.target.value)}
-                    />
-                  </td>
+          {pieces.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>Batch No</th>
+                  <th>Piece No</th>
+                  <th>Product</th>
+                  <th>Customer Length</th>
+                  <th>Customer Width</th>
+                  <th>Trader Length</th>
+                  <th>Trader Width</th>
+                  <th>Thickness</th>
+                  <th>Is Defective</th>
+                  <th>Enquiry Product No</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {pieces.map((piece) => (
+                  <tr key={piece._id}>
+                    <td>{piece.batchNo}</td>
+                    <td>{piece.pieceNo}</td>
+                    <td>{piece.purchaseId?.name || 'N/A'}</td>
+                    <td>{piece.customerLength}</td>
+                    <td>{piece.customerWidth}</td>
+                    <td>{piece.traderLength}</td>
+                    <td>{piece.traderWidth}</td>
+                    <td>{piece.thickness}</td>
+                    <td>{piece.isDefective ? 'Yes' : 'No'}</td>
+                    <td>
+                      <input
+                        type="text"
+                        value={piece.enquiryProductNo || ''}
+                        onChange={(e) => updateEnquiryProductNo(piece._id, e.target.value)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No pieces found. Try adjusting your filter criteria.</p>
+          )}
         </div>
       )}
 
@@ -552,7 +557,7 @@ const AdminPanel = () => {
             <table className="enquiries-table">
               <thead>
                 <tr>
-                  <th>Username</th>
+                  <th>Customer Name</th>
                   <th>Email</th>
                   <th>Phone Number</th>
                   <th>Message</th>
@@ -563,9 +568,9 @@ const AdminPanel = () => {
               <tbody>
                 {enquiries.map((enquiry) => (
                   <tr key={enquiry._id}>
-                    <td>{enquiry.username}</td>
-                    <td>{enquiry.email}</td>
-                    <td>{enquiry.phoneNumber}</td>
+                    <td>{enquiry.customer.username}</td>
+                    <td>{enquiry.customer.email}</td>
+                    <td>{enquiry.customer.phoneNumber}</td>
                     <td>{enquiry.message}</td>
                     <td>
                       <ul>
