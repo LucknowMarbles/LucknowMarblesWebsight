@@ -10,8 +10,9 @@ const pieceSchema = new mongoose.Schema({
   batchNo: { type: String, required: true },
   pieceNo: { type: String, required: true },
   purchaseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Purchase', required: true },
-  purchaseBillNo: { type: String, required: true },
-  enquiryProductNo: { type: String }
+  purchaseBillNo: { type: String, required: true }, 
+  enquiryProductNo: { type: String },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' } // Add this line
 }, { timestamps: true });
 
 const Piece = mongoose.model('Piece', pieceSchema);

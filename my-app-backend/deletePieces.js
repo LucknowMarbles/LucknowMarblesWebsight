@@ -1,21 +1,30 @@
-
+const mongoose = require('mongoose');
 const Piece = require('./modals/Piece');
 
-const deleteAllPieces = async (req, res) => {
-    try {
-      const result = await Piece.deleteMany({});
-      res.status(200).json({ 
-        message: 'All pieces have been deleted', 
-        deletedCount: result.deletedCount 
-      });
-    } catch (error) {
-      console.error('Error deleting pieces:', error);
-      res.status(500).json({ 
-        message: 'Error deleting pieces', 
-        error: error.toString() 
-      });
-    }
-  };
-  module.exports = { 
-    deleteAllPieces  // Add this line
-  };
+// MongoDB connection string - replace with your actual connection string
+const MONGODB_URI = "mongodb://localhost/your_database";
+
+const deleteAllPieces = async () => {
+  try {
+    // Connect to MongoDB
+    await mongoose.connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Connected to MongoDB');
+
+    // Delete all pieces
+    const result = await Piece.deleteMany({});
+    console.log(`Deleted ${result.deletedCount} pieces`);
+
+  } catch (error) {
+    console.error('Error deleting pieces:', error);
+  } finally {
+    // Close the database connection
+    await mongoose.connection.close();
+    console.log('Disconnected from MongoDB');
+  }
+};
+
+// Run the deletion function
+deleteAllPieces();

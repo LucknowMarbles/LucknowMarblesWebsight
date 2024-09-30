@@ -80,6 +80,7 @@ const HomePage = ({ cart, setCart }) => {
             <div key={product._id} className="product-card">
               <img src={product.imageUrl} alt={product.name} className="product-image" />
               <h2 className="product-name">{product.name}</h2>
+              <p className="product-id">Product ID: {product._id}</p> {/* Add this line */}
               <p className="product-description">{product.description}</p>
               <p className="product-quantity">Quantity: {product.quantity}</p>
               <p className="product-price">Price: ${product.price}</p>

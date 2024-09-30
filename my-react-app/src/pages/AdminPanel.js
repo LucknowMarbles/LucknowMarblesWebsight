@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../AdminPanal.css';
 import UploadExcel from '../components/UploadExcel';
 import GenerateInvoice from '../components/GenerateInvoice';
+import { Table, Button, Form, Input, Upload, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 
 const AdminPanel = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -13,8 +15,10 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('users');
   const navigate = useNavigate();
   const [pieces, setPieces] = useState([]);
-  const [batchNo, setBatchNo] = useState('');
-  const [productId, setProductId] = useState('');
+  const [batchNoFilter, setBatchNoFilter] = useState('');
+  const [productIdFilter, setProductIdFilter] = useState('');
+
+
 
   const [product, setProduct] = useState({
     name: '',
@@ -207,18 +211,26 @@ const AdminPanel = () => {
       setLoading(false);
     }
   };
-  const fetchPieces = async () => {
+  const fetchPieces = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:5001/api/pieces?batchNo=${batchNo}&productId=${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await axios.get('http://localhost:5001/api/pieces', {
+        params: {
+          batchNo: batchNoFilter,
+          productId: productIdFilter
+        }
       });
-      setPieces(Array.isArray(response.data) ? response.data : []);
+      setPieces(response.data.data);
     } catch (error) {
       console.error('Error fetching pieces:', error);
-      setPieces([]);
+      message.error('Failed to fetch pieces');
     }
-  };
+  }, [batchNoFilter, productIdFilter]);
+
+  useEffect(() => {
+    fetchPieces();
+  }, [batchNoFilter, productIdFilter, fetchPieces]);
+
+
   const updateEnquiryProductNo = async (pieceId, enquiryProductNo) => {
     try {
       const token = localStorage.getItem('token');
@@ -235,7 +247,7 @@ const AdminPanel = () => {
     if (activeTab === 'pieces') {
       fetchPieces();
     }
-  }, [activeTab, batchNo, productId]);
+  }, [activeTab, batchNoFilter, productIdFilter]);
 
   useEffect(() => {
     if (activeTab === 'enquiries') {
@@ -272,14 +284,14 @@ const AdminPanel = () => {
             <input
               type="text"
               placeholder="Batch No"
-              value={batchNo}
-              onChange={(e) => setBatchNo(e.target.value)}
+              value={batchNoFilter}
+              onChange={(e) => setBatchNoFilter(e.target.value)}
             />
             <input
               type="text"
               placeholder="Product ID"
-              value={productId}
-              onChange={(e) => setProductId(e.target.value)}
+              value={productIdFilter}
+              onChange={(e) => setProductIdFilter(e.target.value)}
             />
             <button onClick={fetchPieces}>Filter</button>
           </div>

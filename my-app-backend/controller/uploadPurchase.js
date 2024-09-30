@@ -57,7 +57,8 @@ const uploadPurchase = async (req, res) => {
       isDefective: row[7].toLowerCase() === 'yes',
       purchaseId: purchase[i]._id,
       purchaseBillNo: row[9],
-      enquiryProductNo: row[10] 
+      enquiryProductNo: row[10],
+      productId: row[14]
     }));
     
 
