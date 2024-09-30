@@ -10,14 +10,38 @@ const predefinedPurposes = [
 ];
 
 const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
-  const [formData, setFormData] = useState({
+    const [selectedProduct, setSelectedProduct] = useState('');
+    const [uniqueBatches, setUniqueBatches] = useState({});
+    const [selectedBatch, setSelectedBatch] = useState('');
+    const [formData, setFormData] = useState({
     username: '',
     email: '',
     phoneNumber: '',
     message: '',
     products: []
   });
-
+  const [batchPieces, setBatchPieces] = useState({});
+  const fetchUniqueBatches = async (productId) => {
+    try {
+      const response = await axios.get(`http://localhost:5001/api/pieces/unique-batches/${productId}`);
+      setUniqueBatches(prevBatches => ({
+        ...prevBatches,
+        [productId]: response.data.data
+      }));
+    } catch (error) {
+      console.error('Error fetching unique batches:', error);
+    }
+  };
+  const handleProductChange = (e) => {
+    const productId = e.target.value;
+    setSelectedProduct(productId);
+    setSelectedBatch(''); // Reset selected batch when product changes
+    if (productId) {
+      fetchUniqueBatches(productId);
+    } else {
+      setUniqueBatches({});
+    }
+  };
   useEffect(() => {
     if (selectedProducts.length > 0) {
       setFormData(prevData => ({
@@ -25,9 +49,11 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
         products: selectedProducts.map(product => ({
           product: product._id,
           quantity: 1,
-          purposes: product.purposes || []
+          purposes: product.purposes || [],
+          selectedBatch: ''
         }))
       }));
+      selectedProducts.forEach(product => fetchUniqueBatches(product._id));
     }
   }, [selectedProducts]);
 
@@ -42,6 +68,30 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
         p.product === productId ? { ...p, quantity: parseInt(quantity) } : p
       )
     }));
+  };
+
+  const fetchPiecesByBatch = async (productId, batchNo) => {
+    try {
+      const response = await axios.get(`http://localhost:5001/api/pieces/batch/${batchNo}`);
+      setBatchPieces(prevPieces => ({
+        ...prevPieces,
+        [productId]: response.data.data
+      }));
+    } catch (error) {
+      console.error('Error fetching pieces for batch:', error);
+    }
+  };
+
+  const handleBatchChange = (productId, batch) => {
+    setFormData(prevData => ({
+      ...prevData,
+      products: prevData.products.map(p => 
+        p.product === productId ? { ...p, selectedBatch: batch } : p
+      )
+    }));
+    if (batch) {
+      fetchPiecesByBatch(productId, batch);
+    }
   };
 
   const handlePurposeChange = (productIndex, purposeIndex, field, value) => {
@@ -181,6 +231,43 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
     }
   };
 
+  const renderBatchPieces = (productId) => {
+    const pieces = batchPieces[productId];
+    if (!pieces || pieces.length === 0) return null;
+
+    return (
+      <div className="batch-pieces">
+        <h5>Available Pieces:</h5>
+        <table>
+          <thead>
+            <tr>
+              <th>Piece No</th>
+              <th>Customer Length</th>
+              <th>Customer Width</th>
+              <th>Trader Length</th>
+              <th>Trader Width</th>
+              <th>Thickness</th>
+              <th>Defective</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pieces.map(piece => (
+              <tr key={piece._id}>
+                <td>{piece.pieceNo}</td>
+                <td>{piece.customerLength}</td>
+                <td>{piece.customerWidth}</td>
+                <td>{piece.traderLength}</td>
+                <td>{piece.traderWidth}</td>
+                <td>{piece.thickness}</td>
+                <td>{piece.isDefective ? 'Yes' : 'No'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <form onSubmit={handleSubmit} className="enquiry-form">
       <h2>Get a Quote</h2>
@@ -227,6 +314,26 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
               value={productData.quantity}
               onChange={(e) => handleProductQuantityChange(productData.product, e.target.value)}
             />
+            
+            <div>
+              <label htmlFor={`batch-${productData.product}`}>Batch:</label>
+              <select
+                id={`batch-${productData.product}`}
+                value={productData.selectedBatch}
+                onChange={(e) => handleBatchChange(productData.product, e.target.value)}
+                required
+              >
+                <option value="">Select a batch</option>
+                {uniqueBatches[productData.product] && uniqueBatches[productData.product].map((batch) => (
+                  <option key={batch} value={batch}>
+                    {batch}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {renderBatchPieces(productData.product)}
+            
             <h4>Purposes</h4>
             {productData.purposes.map((purpose, purposeIndex) => (
               <div key={purposeIndex} className="purpose-section">

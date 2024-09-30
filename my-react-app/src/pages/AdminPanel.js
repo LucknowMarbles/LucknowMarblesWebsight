@@ -16,7 +16,7 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const [pieces, setPieces] = useState([]);
   const [batchNoFilter, setBatchNoFilter] = useState('');
-  const [productIdFilter, setProductIdFilter] = useState('');
+  const [productNameFilter, setproductNameFilter] = useState('');
 
 
 
@@ -216,7 +216,7 @@ const AdminPanel = () => {
       const response = await axios.get('http://localhost:5001/api/pieces', {
         params: {
           batchNo: batchNoFilter,
-          productId: productIdFilter
+          productName: productNameFilter
         }
       });
       setPieces(response.data.data);
@@ -224,11 +224,11 @@ const AdminPanel = () => {
       console.error('Error fetching pieces:', error);
       message.error('Failed to fetch pieces');
     }
-  }, [batchNoFilter, productIdFilter]);
+  }, [batchNoFilter, productNameFilter]);
 
   useEffect(() => {
     fetchPieces();
-  }, [batchNoFilter, productIdFilter, fetchPieces]);
+  }, [batchNoFilter, productNameFilter, fetchPieces]);
 
 
   const updateEnquiryProductNo = async (pieceId, enquiryProductNo) => {
@@ -247,7 +247,7 @@ const AdminPanel = () => {
     if (activeTab === 'pieces') {
       fetchPieces();
     }
-  }, [activeTab, batchNoFilter, productIdFilter]);
+  }, [activeTab, batchNoFilter, productNameFilter]);
 
   useEffect(() => {
     if (activeTab === 'enquiries') {
@@ -290,8 +290,8 @@ const AdminPanel = () => {
             <input
               type="text"
               placeholder="Product ID"
-              value={productIdFilter}
-              onChange={(e) => setProductIdFilter(e.target.value)}
+              value={productNameFilter}
+              onChange={(e) => setproductNameFilter(e.target.value)}
             />
             <button onClick={fetchPieces}>Filter</button>
           </div>
@@ -308,7 +308,7 @@ const AdminPanel = () => {
                   <th>Trader Width</th>
                   <th>Thickness</th>
                   <th>Is Defective</th>
-                  <th>Enquiry Product No</th>
+                  <th>Purchase Id</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,20 +316,14 @@ const AdminPanel = () => {
                   <tr key={piece._id}>
                     <td>{piece.batchNo}</td>
                     <td>{piece.pieceNo}</td>
-                    <td>{piece.purchaseId?.name || 'N/A'}</td>
+                    <td>{piece.productName}</td>
                     <td>{piece.customerLength}</td>
                     <td>{piece.customerWidth}</td>
                     <td>{piece.traderLength}</td>
                     <td>{piece.traderWidth}</td>
                     <td>{piece.thickness}</td>
                     <td>{piece.isDefective ? 'Yes' : 'No'}</td>
-                    <td>
-                      <input
-                        type="text"
-                        value={piece.enquiryProductNo || ''}
-                        onChange={(e) => updateEnquiryProductNo(piece._id, e.target.value)}
-                      />
-                    </td>
+                    <td>{piece.purchaseId}</td>
                   </tr>
                 ))}
               </tbody>

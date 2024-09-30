@@ -58,7 +58,8 @@ const uploadPurchase = async (req, res) => {
       purchaseId: purchase[i]._id,
       purchaseBillNo: row[9],
       enquiryProductNo: row[10],
-      productId: row[14]
+      productId: new mongoose.Types.ObjectId(row[14]),
+      productName: row[15]
     }));
     
 
@@ -133,12 +134,12 @@ const generateInvoice = async (req, res) => {
 
 const DisplayPieces = async (req, res) => {
   try {
-    const { batchNo, productId } = req.query;
+    const { batchNo, productName } = req.query;
     let query = {};
     if (batchNo) query.batchNo = batchNo;
-    if (productId) query.purchaseId = productId;
+    if (productName) query.productName = productName;
 
-    const pieces = await Piece.find(query).populate('purchaseId', 'name');
+    const pieces = await Piece.find(query).populate('productName', 'name');
     
     // Ensure we're sending a valid JSON response
     res.json({ success: true, data: pieces });
@@ -149,4 +150,27 @@ const DisplayPieces = async (req, res) => {
   }
 };
 
-module.exports = { uploadPurchase, uploadSale, generateInvoice, DisplayPieces };
+const getUniqueBatchesForProduct = async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const uniqueBatches = await Piece.distinct('batchNo', { productId });
+      res.json({ success: true, data: uniqueBatches });
+    } catch (error) {
+      console.error('Error fetching unique batches:', error);
+      res.status(500).json({ success: false, message: 'Error fetching unique batches', error: error.message });
+    }
+  };
+
+
+  const getPiecesByBatch = async (req, res) => {
+    try {
+      const { batchNo } = req.params;
+      const pieces = await Piece.find({ batchNo }).select('pieceNo customerLength customerWidth traderLength traderWidth thickness isDefective');
+      res.json({ success: true, data: pieces });
+    } catch (error) {
+      console.error('Error fetching pieces by batch:', error);
+      res.status(500).json({ success: false, message: 'Error fetching pieces', error: error.message });
+    }
+  };
+
+module.exports = { uploadPurchase, uploadSale, generateInvoice, DisplayPieces, getUniqueBatchesForProduct,getPiecesByBatch};

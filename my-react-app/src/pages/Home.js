@@ -12,6 +12,7 @@ const HomePage = ({ cart, setCart }) => {
   const [showEcommerceOnly, setShowEcommerceOnly] = useState(false);
 
   useEffect(() => {
+
     const fetchProducts = async () => {
       try {
         const { data } = await axios.get('http://localhost:5001/api/products');
