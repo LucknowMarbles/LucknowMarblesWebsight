@@ -7,7 +7,7 @@ import GenerateInvoice from '../components/GenerateInvoice';
 import { Table, Button, Form, Input, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 
-const AdminPanel = () => {
+function AdminPanel() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -17,9 +17,7 @@ const AdminPanel = () => {
   const [pieces, setPieces] = useState([]);
   const [batchNoFilter, setBatchNoFilter] = useState('');
   const [productNameFilter, setproductNameFilter] = useState('');
-
-
-
+  const [autoPost, setAutoPost] = useState(false);
   const [product, setProduct] = useState({
     name: '',
     description: '',
@@ -37,6 +35,15 @@ const AdminPanel = () => {
 
   const [expandedPermissions, setExpandedPermissions] = useState({});
 
+  const permissionCategories = {
+    'User Management': ['viewUsers', 'editUsers', 'deleteUsers', 'changeUserRoles'],
+    'Product Management': ['viewProducts', 'addProducts', 'editProducts', 'deleteProducts', 'manageCategories'],
+    'Order Management': ['viewOrders', 'updateOrderStatus', 'cancelOrders', 'refundOrders'],
+    'Enquiry Management': ['viewEnquiries', 'respondToEnquiries', 'deleteEnquiries'],
+    'Content Management': ['editWebsiteContent', 'manageBlogPosts'],
+    'Analytics & Reporting': ['viewSalesReports', 'viewUserAnalytics', 'exportData'],
+    'System Configuration': ['managePaymentGateways', 'manageShippingOptions', 'setSystemPreferences', 'viewSecurityLogs', 'manageUserPermissions']
+  };
   const togglePermissionCategory = (userId, category) => {
     setExpandedPermissions(prev => ({
       ...prev,
@@ -47,15 +54,7 @@ const AdminPanel = () => {
     }));
   };
 
-  const permissionCategories = {
-    'User Management': ['viewUsers', 'editUsers', 'deleteUsers', 'changeUserRoles'],
-    'Product Management': ['viewProducts', 'addProducts', 'editProducts', 'deleteProducts', 'manageCategories'],
-    'Order Management': ['viewOrders', 'updateOrderStatus', 'cancelOrders', 'refundOrders'],
-    'Enquiry Management': ['viewEnquiries', 'respondToEnquiries', 'deleteEnquiries'],
-    'Content Management': ['editWebsiteContent', 'manageBlogPosts'],
-    'Analytics & Reporting': ['viewSalesReports', 'viewUserAnalytics', 'exportData'],
-    'System Configuration': ['managePaymentGateways', 'manageShippingOptions', 'setSystemPreferences', 'viewSecurityLogs', 'manageUserPermissions']
-  };
+  // ... rest of the component ...
 
   useEffect(() => {
     checkAdminStatus();
@@ -253,10 +252,10 @@ const AdminPanel = () => {
     if (activeTab === 'enquiries') {
       fetchEnquiries();
     }
-  }, [activeTab]);
+  }, [activeTab])
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   if (!isAdmin) {
@@ -510,6 +509,18 @@ const AdminPanel = () => {
                 step="any"
               />
             </div>
+            <div className="form-group">
+            <label htmlFor="autoPost">
+              <input
+                type="checkbox"
+                id="autoPost"
+                name="autoPost"
+                checked={autoPost}
+                onChange={(e) => setAutoPost(e.target.checked)}
+              />
+                Automatically post to social media
+              </label>
+            </div>
             <button type="submit">Create Product</button>
           </form>
         </div>
@@ -579,14 +590,30 @@ const AdminPanel = () => {
                     <td>{enquiry.customer.phoneNumber}</td>
                     <td>{enquiry.message}</td>
                     <td>
-                      <ul>
+                      <ul className="product-list">
                         {enquiry.products.map((product, index) => (
-                          <li key={index}>
-                            {product.product.name} - Quantity: {product.quantity}
+                          <li key={index} className="product-item">
+                            <strong>{product.product.name}</strong> - Quantity: {product.quantity}
                             <br />
-                            Purpose: {product.purposeOfUse}
+                            Selected Batch: {product.selectedBatch}
                             <br />
-                            Dimensions: {JSON.stringify(product.dimensions)}
+                            Purposes:
+                            <ul className="purpose-list">
+                              {product.purposes.map((purpose, purposeIndex) => (
+                                <li key={purposeIndex} className="purpose-item">
+                                  <strong>{purpose.purposeOfUse}</strong>
+                                  <br />
+                                  Dimensions:
+                                  <ul className="dimension-list">
+                                    {Object.entries(purpose.dimensions).map(([key, value]) => (
+                                      <li key={key} className="dimension-item">
+                                        {key}: {value}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </li>
+                              ))}
+                            </ul>
                           </li>
                         ))}
                       </ul>

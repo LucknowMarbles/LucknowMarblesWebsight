@@ -10,6 +10,7 @@ const predefinedPurposes = [
 ];
 
 const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
+    const [purpose, setPurpose] = useState('');
     const [selectedProduct, setSelectedProduct] = useState('');
     const [uniqueBatches, setUniqueBatches] = useState({});
     const [selectedBatch, setSelectedBatch] = useState('');
@@ -49,7 +50,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
         products: selectedProducts.map(product => ({
           product: product._id,
           quantity: 1,
-          purposes: product.purposes || [],
+          purposes: [],
           selectedBatch: ''
         }))
       }));
@@ -94,6 +95,18 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
     }
   };
 
+  const addPurpose = (productIndex) => {
+    setFormData(prevData => ({
+      ...prevData,
+      products: prevData.products.map((p, i) => 
+        i === productIndex ? {
+          ...p,
+          purposes: [...p.purposes, { purposeOfUse: '', dimensions: {} }]
+        } : p
+      )
+    }));
+  };
+
   const handlePurposeChange = (productIndex, purposeIndex, field, value) => {
     setFormData(prevData => ({
       ...prevData,
@@ -106,13 +119,19 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
         } : p
       )
     }));
+
+    // Set the purpose state (optional, you might want to remove this if it's not needed)
+    setPurpose(value);
   };
 
-  const addPurpose = (productIndex) => {
+  const removePurpose = (productIndex, purposeIndex) => {
     setFormData(prevData => ({
       ...prevData,
       products: prevData.products.map((p, i) => 
-        i === productIndex ? { ...p, purposes: [...p.purposes, { purposeOfUse: '', dimensions: { length: '', width: '', height: '' } }] } : p
+        i === productIndex ? {
+          ...p,
+          purposes: p.purposes.filter((_, j) => j !== purposeIndex)
+        } : p
       )
     }));
   };
@@ -120,6 +139,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('Submitting form data:', formData); // Log the data being sent
       const response = await axios.post('http://localhost:5001/api/enquiries', formData);
       console.log('Enquiry submitted:', response.data);
       // Reset form
@@ -134,11 +154,15 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
       alert('Enquiry submitted successfully!');
     } catch (error) {
       console.error('Error submitting enquiry:', error);
+      console.error('Error response:', error.response); // Log the full error response
       alert('Error submitting enquiry. Please try again.');
     }
   };
+  console.log(purpose);
 
   const renderDimensionInputs = (purpose, productIndex, purposeIndex) => {
+    const dimensions = purpose.dimensions || {};
+    
     switch (purpose.purposeOfUse) {
       case 'Kitchen top or table':
         return (
@@ -146,14 +170,14 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
             <input
               type="number"
               placeholder="Length"
-              value={purpose.dimensions.length || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, length: e.target.value })}
+              value={dimensions.length || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, length: e.target.value })}
             />
             <input
               type="number"
               placeholder="Width"
-              value={purpose.dimensions.width || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, width: e.target.value })}
+              value={dimensions.width || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, width: e.target.value })}
             />
           </div>
         );
@@ -163,26 +187,26 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
             <input
               type="number"
               placeholder="Riser Length"
-              value={purpose.dimensions.riserLength || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, riserLength: e.target.value })}
+              value={dimensions.riserLength || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, riserLength: e.target.value })}
             />
             <input
               type="number"
               placeholder="Riser Width"
-              value={purpose.dimensions.riserWidth || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, riserWidth: e.target.value })}
+              value={dimensions.riserWidth || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, riserWidth: e.target.value })}
             />
             <input
               type="number"
               placeholder="Step Length"
-              value={purpose.dimensions.stepLength || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, stepLength: e.target.value })}
+              value={dimensions.stepLength || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, stepLength: e.target.value })}
             />
             <input
               type="number"
               placeholder="Step Width"
-              value={purpose.dimensions.stepWidth || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, stepWidth: e.target.value })}
+              value={dimensions.stepWidth || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, stepWidth: e.target.value })}
             />
           </div>
         );
@@ -192,14 +216,14 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
             <input
               type="number"
               placeholder="Length"
-              value={purpose.dimensions.length || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, length: e.target.value })}
+              value={dimensions.length || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, length: e.target.value })}
             />
             <input
               type="number"
               placeholder="Width"
-              value={purpose.dimensions.width || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, width: e.target.value })}
+              value={dimensions.width || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, width: e.target.value })}
             />
           </div>
         );
@@ -209,20 +233,20 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
             <input
               type="number"
               placeholder="Width"
-              value={purpose.dimensions.width || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, width: e.target.value })}
+              value={dimensions.width || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, width: e.target.value })}
             />
             <input
               type="number"
               placeholder="Height"
-              value={purpose.dimensions.height || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, height: e.target.value })}
+              value={dimensions.height || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, height: e.target.value })}
             />
             <input
               type="number"
               placeholder="Running Fit"
-              value={purpose.dimensions.runningFit || ''}
-              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...purpose.dimensions, runningFit: e.target.value })}
+              value={dimensions.runningFit || ''}
+              onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'dimensions', { ...dimensions, runningFit: e.target.value })}
             />
           </div>
         );
@@ -335,10 +359,10 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
             {renderBatchPieces(productData.product)}
             
             <h4>Purposes</h4>
-            {productData.purposes.map((purpose, purposeIndex) => (
+            {productData.purposes.map((purposeData, purposeIndex) => (
               <div key={purposeIndex} className="purpose-section">
                 <select
-                  value={purpose.purposeOfUse}
+                  value={purposeData.purposeOfUse}
                   onChange={(e) => handlePurposeChange(productIndex, purposeIndex, 'purposeOfUse', e.target.value)}
                   required
                 >
@@ -347,7 +371,8 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
                     <option key={purpose} value={purpose}>{purpose}</option>
                   ))}
                 </select>
-                {renderDimensionInputs(purpose, productIndex, purposeIndex)}
+                {renderDimensionInputs(purposeData, productIndex, purposeIndex)}
+                <button type="button" onClick={() => removePurpose(productIndex, purposeIndex)}>Remove Purpose</button>
               </div>
             ))}
             <button type="button" className="add-purpose-btn" onClick={() => addPurpose(productIndex)}>Add Another Purpose</button>
@@ -358,6 +383,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
       <button type="submit" className="submit-enquiry-btn">Submit Enquiry</button>
     </form>
   );
+  
 };
 
 export default EnquiryForm;

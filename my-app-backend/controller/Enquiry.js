@@ -1,25 +1,27 @@
-const Enquiry = require('../modals/Enquiry');
+const Enquiry = require('../modals/Enquiry').Enquiry;
 const Customer = require('../modals/Customer');
 
 const createEnquiry = async (req, res) => {
   try {
     const {
-      customerName,
-      customerEmail,
-      customerPhone,
+      username,
+      email,
+      phoneNumber,
       message,
-      products,
-      purposeOfUse,
-      dimensions
+      products
     } = req.body;
 
-    // Check if customer exists, if not create a new one
-    let customer = await Customer.findOne({ email: customerEmail });
+    console.log('Received enquiry data:', JSON.stringify(req.body, null, 2));
+
+    let customer = await Customer.findOne({ email });
     if (!customer) {
+      if (!username || !email || !phoneNumber) {
+        return res.status(400).json({ message: 'Username, email, and phone number are required for new customers' });
+      }
       customer = new Customer({
-        username: customerName,
-        email: customerEmail,
-        phoneNumber: customerPhone
+        username,
+        email,
+        phoneNumber
       });
       await customer.save();
     }
@@ -28,16 +30,31 @@ const createEnquiry = async (req, res) => {
       customer: customer._id,
       message,
       products: products.map(product => ({
-        product: product.productId,
+        product: product.product,
+        purposes: product.purposes.map(purpose => ({
+          purposeOfUse: purpose.purposeOfUse,
+          dimensions: Array.isArray(purpose.dimensions) 
+            ? purpose.dimensions.map(dimension => ({
+                length: dimension.length,
+                width: dimension.width,
+                height: dimension.height,
+                riserLength: dimension.riserLength,
+                riserWidth: dimension.riserWidth,
+                stepLength: dimension.stepLength,
+                stepWidth: dimension.stepWidth,
+                runningFit: dimension.runningFit
+              }))
+            : [purpose.dimensions] // If it's not an array, wrap it in an array
+        })),
         quantity: product.quantity,
-        purposeOfUse: product.purposeOfUse,
-        dimensions: product.dimensions
+        selectedBatch: product.selectedBatch
       }))
     });
 
+    console.log('New enquiry object:', JSON.stringify(newEnquiry, null, 2));
+
     const savedEnquiry = await newEnquiry.save();
     
-    // Populate the customer and product details in the response
     const populatedEnquiry = await Enquiry.findById(savedEnquiry._id)
       .populate('customer', 'username email phoneNumber')
       .populate('products.product', 'name');
@@ -45,7 +62,7 @@ const createEnquiry = async (req, res) => {
     res.status(201).json(populatedEnquiry);
   } catch (error) {
     console.error('Error creating enquiry:', error);
-    res.status(500).json({ message: 'Failed to create enquiry', error: error.message });
+    res.status(500).json({ message: 'Failed to create enquiry', error: error.message, stack: error.stack });
   }
 };
 

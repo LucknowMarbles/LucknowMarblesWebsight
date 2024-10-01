@@ -1,4 +1,5 @@
 const Product = require('../modals/Product'); // Note: Changed 'modals' to 'models'
+const { postToSocialMedia } = require('./postToSocialMedia');
 
 const getProducts = async (req, res) => {
   console.log('getProducts function called');
@@ -44,6 +45,7 @@ const createProduct = async (req, res) => {
     });
 
     const savedProduct = await newProduct.save();
+    await postToSocialMedia(savedProduct);
     res.status(201).json(savedProduct);
   } catch (err) {
     console.error('Error creating product:', err);
