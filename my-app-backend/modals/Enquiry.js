@@ -13,7 +13,7 @@ const dimensionSchema = new mongoose.Schema({
 
 const purposeSchema = new mongoose.Schema({
   purposeOfUse: { type: String, required: true, enum: ['Kitchen top or table', 'Stairs', 'Flooring', 'Dahal'] },
-  dimensions: [dimensionSchema]
+  dimension: dimensionSchema
 }, { _id: false });
 
 const productEnquirySchema = new mongoose.Schema({
@@ -33,4 +33,4 @@ const enquirySchema = new mongoose.Schema({
 });
 
 const Enquiry = mongoose.model('Enquiry', enquirySchema);
-module.exports = {Enquiry};
+module.exports = Enquiry;

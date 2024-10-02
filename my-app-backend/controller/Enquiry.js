@@ -1,4 +1,4 @@
-const Enquiry = require('../modals/Enquiry').Enquiry;
+const Enquiry = require('../modals/Enquiry');
 const Customer = require('../modals/Customer');
 
 const createEnquiry = async (req, res) => {
@@ -11,7 +11,7 @@ const createEnquiry = async (req, res) => {
       products
     } = req.body;
 
-    console.log('Received enquiry data:', JSON.stringify(req.body, null, 2));
+    console.log('Received enquiry data:', req.body.products[0].purposes[0].dimension.length);
 
     let customer = await Customer.findOne({ email });
     if (!customer) {
@@ -33,25 +33,23 @@ const createEnquiry = async (req, res) => {
         product: product.product,
         purposes: product.purposes.map(purpose => ({
           purposeOfUse: purpose.purposeOfUse,
-          dimensions: Array.isArray(purpose.dimensions) 
-            ? purpose.dimensions.map(dimension => ({
-                length: dimension.length,
-                width: dimension.width,
-                height: dimension.height,
-                riserLength: dimension.riserLength,
-                riserWidth: dimension.riserWidth,
-                stepLength: dimension.stepLength,
-                stepWidth: dimension.stepWidth,
-                runningFit: dimension.runningFit
-              }))
-            : [purpose.dimensions] // If it's not an array, wrap it in an array
+          dimension: {
+            length: purpose.dimension[0].length,
+            width: purpose.dimension[0].width,
+            height: purpose.dimension[0].height,
+            riserLength: purpose.dimension[0].riserLength,
+            riserWidth: purpose.dimension[0].riserWidth,
+            stepLength: purpose.dimension[0].stepLength,
+            stepWidth: purpose.dimension[0].stepWidth,
+            runningFit: purpose.dimension[0].runningFit
+        }
         })),
         quantity: product.quantity,
         selectedBatch: product.selectedBatch
       }))
     });
 
-    console.log('New enquiry object:', JSON.stringify(newEnquiry, null, 2));
+    console.log('New enquiry object:', newEnquiry);
 
     const savedEnquiry = await newEnquiry.save();
     

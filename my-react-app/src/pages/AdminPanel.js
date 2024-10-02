@@ -605,7 +605,7 @@ function AdminPanel() {
                                   <br />
                                   Dimensions:
                                   <ul className="dimension-list">
-                                    {Object.entries(purpose.dimensions).map(([key, value]) => (
+                                    {purpose.dimension && Object.entries(purpose.dimension).map(([key, value]) => (
                                       <li key={key} className="dimension-item">
                                         {key}: {value}
                                       </li>
