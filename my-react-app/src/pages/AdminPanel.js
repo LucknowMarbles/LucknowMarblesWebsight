@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import '../AdminPanal.css';
 import UploadExcel from '../components/UploadExcel';
 import GenerateInvoice from '../components/GenerateInvoice';
@@ -275,6 +275,7 @@ function AdminPanel() {
         <button onClick={() => setActiveTab('uploadPurchase')}>Upload Purchase Data</button>
         <button onClick={() => setActiveTab('uploadSale')}>Upload Sale Data</button>
         <button onClick={() => setActiveTab('generateInvoice')}>Generate Invoice</button>
+        <button onClick={() => setActiveTab('calendar')}>Google Calendar</button>
       </div>
       {activeTab === 'pieces' && (
         <div className="pieces-section">
@@ -651,6 +652,13 @@ function AdminPanel() {
         <div className="generate-invoice-section">
           <h2>Generate Invoice</h2>
           <GenerateInvoice />
+        </div>
+      )}
+
+      {activeTab === 'calendar' && (
+        <div className="calendar-section">
+          <h2>Google Calendar</h2>
+          <Link to="/pages/calendar" className="calendar-link">View Full Calendar</Link>
         </div>
       )}
     </div>

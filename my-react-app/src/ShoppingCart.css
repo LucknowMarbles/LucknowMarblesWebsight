@@ -152,3 +152,188 @@
       margin-bottom: 20px;
     }
   }
+
+  /* ... (previous styles remain the same) ... */
+
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+  
+  .payment-methods label {
+    margin-bottom: 10px;
+  }
+  
+  .neft-rtgs-details {
+    background-color: #f0f0f0;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .neft-rtgs-details h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+  
+  .neft-rtgs-details p {
+    margin: 5px 0;
+  }
+  
+  .neft-rtgs-details input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .upi-payment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .upi-payment h3 {
+    margin-bottom: 20px;
+  }
+  
+  .upi-payment canvas {
+    margin-bottom: 20px;
+  }
+  
+  .order-complete {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .order-complete h2 {
+    color: #4CAF50;
+    margin-bottom: 20px;
+  }
+  
+  .order-complete p {
+    margin-bottom: 10px;
+  }
+  
+  .order-complete button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+  }
+  
+  .order-complete button:hover {
+    background-color: #45a049;
+  }
+  
+  @media print {
+    .shopping-cart-container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  
+    .cart-items,
+    .cart-summary,
+    .checkout-form,
+    .upi-payment {
+      display: none;
+    }
+  
+    .order-complete {
+      display: block;
+    }
+  }
+
+  /* ... (previous styles remain the same) ... */
+
+.utr-input {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.utr-input h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.utr-input p {
+  margin-bottom: 15px;
+}
+
+.bank-details {
+  background-color: #f0f0f0;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.bank-details p {
+  margin: 5px 0;
+}
+
+.utr-input form {
+  display: flex;
+  flex-direction: column;
+}
+
+.utr-input input {
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.utr-input button {
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.utr-input button:hover {
+  background-color: #45a049;
+}
+
+/* ... (rest of the styles remain the same) ... */
+
+.confirmation-summary {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.upi-payment,
+.utr-input,
+.order-complete {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.upi-payment .cart-summary,
+.utr-input .cart-summary,
+.order-complete .cart-summary {
+  margin-bottom: 20px;
+}
+
+/* ... (rest of the styles remain the same) ... */

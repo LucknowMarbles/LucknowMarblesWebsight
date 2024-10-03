@@ -22,6 +22,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
     products: []
   });
   const [batchPieces, setBatchPieces] = useState({});
+  const [selectedPieces, setSelectedPieces] = useState({});
   const fetchUniqueBatches = async (productId) => {
     try {
       const response = await axios.get(`http://localhost:5001/api/pieces/unique-batches/${productId}`);
@@ -277,6 +278,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
         <table>
           <thead>
             <tr>
+              <th>Select</th>
               <th>Piece No</th>
               <th>Customer Length</th>
               <th>Customer Width</th>
@@ -289,6 +291,13 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
           <tbody>
             {pieces.map(piece => (
               <tr key={piece._id}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedPieces[productId]?.[piece._id] || false}
+                    onChange={(e) => handlePieceSelection(productId, piece._id, e.target.checked)}
+                  />
+                </td>
                 <td>{piece.pieceNo}</td>
                 <td>{piece.customerLength}</td>
                 <td>{piece.customerWidth}</td>
@@ -302,6 +311,16 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
         </table>
       </div>
     );
+  };
+
+  const handlePieceSelection = (productId, pieceId, isSelected) => {
+    setSelectedPieces(prevSelected => ({
+      ...prevSelected,
+      [productId]: {
+        ...(prevSelected[productId] || {}),
+        [pieceId]: isSelected
+      }
+    }));
   };
 
   return (

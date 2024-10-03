@@ -89,3 +89,25 @@
   .submit-btn:hover {
     background-color: #2980b9;
   }
+  /* ... existing styles ... */
+
+.batch-pieces table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  
+  .batch-pieces th,
+  .batch-pieces td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .batch-pieces th {
+    background-color: #f2f2f2;
+  }
+  
+  .batch-pieces input[type="checkbox"] {
+    cursor: pointer;
+  }
