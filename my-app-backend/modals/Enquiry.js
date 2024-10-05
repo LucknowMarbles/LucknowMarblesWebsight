@@ -21,6 +21,7 @@ const productEnquirySchema = new mongoose.Schema({
   product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
   quantity: { type: Number, required: true, min: 1 },
   purposes: [purposeSchema],
+  pieces: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Piece' }]
 });
 
 
@@ -29,7 +30,7 @@ const enquirySchema = new mongoose.Schema({
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
   message: { type: String },
   products: [productEnquirySchema],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
 
 const Enquiry = mongoose.model('Enquiry', enquirySchema);

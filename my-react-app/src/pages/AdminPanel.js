@@ -615,6 +615,27 @@ function AdminPanel() {
                                 </li>
                               ))}
                             </ul>
+                            <br />
+                            Selected Pieces:
+                            <ul className="pieces-list">
+                              {product.pieces.map((piece, pieceIndex) => (
+                                <li key={pieceIndex} className="piece-item">
+                                  Piece No: {piece}
+                                  <br />
+                                  Customer Length: {piece.customerLength}
+                                  <br />
+                                  Customer Width: {piece.customerWidth}
+                                  <br />
+                                  Trader Length: {piece.traderLength}
+                                  <br />
+                                  Trader Width: {piece.traderWidth}
+                                  <br />
+                                  Thickness: {piece.thickness}
+                                  <br />
+                                  Defective: {piece.isDefective ? 'Yes' : 'No'}
+                                </li>
+                              ))}
+                            </ul>
                           </li>
                         ))}
                       </ul>

@@ -16,7 +16,9 @@ const orderSchema = new mongoose.Schema({
   subtotal: Number,
   deliveryCharge: Number,
   totalAmount: Number,
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  paymentMethod: { type: String, enum: ['upi', 'cod'], required: true },
+  paymentStatus: { type: String, enum: ['pending', 'completed'], default: 'pending' },
 });
 
 const Order = mongoose.model('Order', orderSchema);

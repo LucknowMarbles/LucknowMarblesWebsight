@@ -173,4 +173,20 @@ const getUniqueBatchesForProduct = async (req, res) => {
     }
   };
 
-module.exports = { uploadPurchase, uploadSale, generateInvoice, DisplayPieces, getUniqueBatchesForProduct,getPiecesByBatch};
+  const getPieceById = async (req, res) => {
+    try {
+      const pieceId = req.params.id;
+      const piece = await Piece.findById(pieceId);
+      
+      if (!piece) {
+        return res.status(404).json({ message: 'Piece not found' });
+      }
+      
+      res.status(200).json(piece);
+    } catch (error) {
+      console.error('Error fetching piece by ID:', error);
+      res.status(500).json({ message: 'Error fetching piece', error: error.message });
+    }
+  };
+
+module.exports = { uploadPurchase, uploadSale, generateInvoice, DisplayPieces, getUniqueBatchesForProduct,getPiecesByBatch, getPieceById};

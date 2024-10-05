@@ -8,6 +8,7 @@ const productRoutes = require('./routes/Product'); // Import product routes
 const enquiryRoutes = require('./routes/Enquiry');
 const orderRoutes = require('./routes/Order'); // Import order routes
 const pieceRoutes = require('./routes/Piece');
+const saleEnquiryRoutes = require('./routes/SaleEnquiey');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/products', productRoutes); // Use product routes
 app.use('/api/enquiries', enquiryRoutes);
 app.use('/api/orders', orderRoutes); // Use order routes
 app.use('/api/pieces', pieceRoutes);
+app.use('/api/sale', saleEnquiryRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

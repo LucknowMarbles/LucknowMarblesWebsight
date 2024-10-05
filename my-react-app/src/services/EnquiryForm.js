@@ -49,6 +49,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
       setFormData(prevData => ({
         ...prevData,
         products: selectedProducts.map(product => ({
+          pieces: [],
           product: product._id,
           quantity: 1,
           purposes: [],
@@ -267,7 +268,31 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
         return null;
     }
   };
+  const handlePieceSelection = (productId, piece, isSelected) => {
+    setSelectedPieces(prevSelected => ({
+      ...prevSelected,
+      [productId]: {
+        ...(prevSelected[productId] || {}),
+        [piece._id]: isSelected
+      }
+    }));
 
+    setFormData(prevData => ({
+      ...prevData,
+      products: prevData.products.map(product => {
+        if (product.product === productId) {
+          const updatedPieces = isSelected
+            ? [...(product.pieces || []), piece._id]
+            : (product.pieces || []).filter(p => p._id !== piece._id);
+          return {
+            ...product,
+            pieces: updatedPieces
+          };
+        }
+        return product;
+      })
+    }));
+  };
   const renderBatchPieces = (productId) => {
     const pieces = batchPieces[productId];
     if (!pieces || pieces.length === 0) return null;
@@ -295,7 +320,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
                   <input
                     type="checkbox"
                     checked={selectedPieces[productId]?.[piece._id] || false}
-                    onChange={(e) => handlePieceSelection(productId, piece._id, e.target.checked)}
+                    onChange={(e) => handlePieceSelection(productId, piece, e.target.checked)}
                   />
                 </td>
                 <td>{piece.pieceNo}</td>
@@ -313,15 +338,7 @@ const EnquiryForm = ({ selectedProducts = [], setSelectedProducts }) => {
     );
   };
 
-  const handlePieceSelection = (productId, pieceId, isSelected) => {
-    setSelectedPieces(prevSelected => ({
-      ...prevSelected,
-      [productId]: {
-        ...(prevSelected[productId] || {}),
-        [pieceId]: isSelected
-      }
-    }));
-  };
+
 
   return (
     <form onSubmit={handleSubmit} className="enquiry-form">

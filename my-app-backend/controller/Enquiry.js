@@ -1,5 +1,6 @@
 const Enquiry = require('../modals/Enquiry');
 const Customer = require('../modals/Customer');
+const mongoose = require('mongoose');
 
 const createEnquiry = async (req, res) => {
   try {
@@ -42,10 +43,13 @@ const createEnquiry = async (req, res) => {
             stepLength: purpose.dimension[0].stepLength,
             stepWidth: purpose.dimension[0].stepWidth,
             runningFit: purpose.dimension[0].runningFit
-        }
+          }
         })),
         quantity: product.quantity,
-        selectedBatch: product.selectedBatch
+        selectedBatch: product.selectedBatch,
+        pieces: product.pieces.map(piece => 
+            new mongoose.Types.ObjectId(piece)
+        )
       }))
     });
 
@@ -55,7 +59,8 @@ const createEnquiry = async (req, res) => {
     
     const populatedEnquiry = await Enquiry.findById(savedEnquiry._id)
       .populate('customer', 'username email phoneNumber')
-      .populate('products.product', 'name');
+      .populate('products.product', 'name')
+      .populate('products.pieces', 'pieceNo');
 
     res.status(201).json(populatedEnquiry);
   } catch (error) {
