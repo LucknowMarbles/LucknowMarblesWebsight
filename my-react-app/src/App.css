@@ -39,26 +39,47 @@
 
 /* Navbar styles */
 .navbar {
-  background-color: #343a40;
+  background-color: #FFFFFF;
   padding: 15px 0;
+  border-bottom: 1px solid #E1E3DF;
 }
 
 .navbar-list {
   list-style: none;
   display: flex;
-  justify-content: center;
-  margin: 0;
-  padding: 0;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .navbar-item {
-  margin: 0 20px;
+  margin: 0;
 }
 
 .navbar-link {
-  color: #ffffff;
+  color: var(--etsy-dark);
   text-decoration: none;
-  font-size: 18px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 15px;
+  transition: color 0.3s ease;
+}
+
+.navbar-link:hover {
+  color: var(--etsy-orange);
+}
+
+.navbar-link.cart {
+  background-color: var(--etsy-orange);
+  color: #FFFFFF;
+  border-radius: 24px;
+  padding: 8px 16px;
+}
+
+.navbar-link.cart:hover {
+  background-color: #E55B19;
 }
 
 /* Admin Panel styles */

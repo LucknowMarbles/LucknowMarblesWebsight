@@ -1,5 +1,6 @@
 const express = require('express');
 const { 
+  getAllCustomers,
   registerUser, 
   createCustomer,
   convertToUser,
@@ -21,7 +22,7 @@ router.post('/login', loginUser);
 router.get('/profile', getUserProfile);
 router.get('/check/:email', authMiddleware,checkUser);
 router.post('/check-phone', authMiddleware,checkPhoneNumber);
-
+router.get('/customers', getAllCustomers);
 router.get('/', authMiddleware, getAllUsers);
 router.put('/:id/permissions', authMiddleware, adminMiddleware, updateUserPermissions);
 router.put('/:userId/permissions', authMiddleware, adminMiddleware, updateUserPermissions);

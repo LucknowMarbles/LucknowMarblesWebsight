@@ -19,7 +19,9 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.3",
+    "nodemailer": "^6.9.15",
     "read-excel-file": "^5.8.6",
+    "twilio": "^5.3.3",
     "xlsx": "^0.18.5"
   }
 }

@@ -13,7 +13,8 @@ const pieceSchema = new mongoose.Schema({
   purchaseBillNo: { type: String, required: true }, 
   enquiryProductNo: { type: String },
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // Add this line
-  productName: { type: String }
+  productName: { type: String },
+  isSold: { type: Boolean, default: false },
 }, { timestamps: true });
 
 const Piece = mongoose.model('Piece', pieceSchema);

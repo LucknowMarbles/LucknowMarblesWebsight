@@ -9,7 +9,7 @@ const enquiryRoutes = require('./routes/Enquiry');
 const orderRoutes = require('./routes/Order'); // Import order routes
 const pieceRoutes = require('./routes/Piece');
 const saleEnquiryRoutes = require('./routes/SaleEnquiey');
-
+const otpRoutes = require('./routes/Otp');
 const app = express();
 
 // Enable CORS for all routes
@@ -33,6 +33,7 @@ app.use('/api/enquiries', enquiryRoutes);
 app.use('/api/orders', orderRoutes); // Use order routes
 app.use('/api/pieces', pieceRoutes);
 app.use('/api/sale', saleEnquiryRoutes);
+app.use('/api/otp', otpRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

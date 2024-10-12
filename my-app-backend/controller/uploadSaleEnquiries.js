@@ -1,50 +1,69 @@
 const SaleEnquiry = require('../modals/Sale');
-const xlsx = require('xlsx');
+const mongoose = require('mongoose');
 
 exports.uploadSaleEnquiries = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+    console.log(req.body);
+    const saleData = req.body;
+
+    // Validate the incoming data
+    if (!saleData || !Array.isArray(saleData.items) || saleData.items.length === 0) {
+      return res.status(400).json({ message: 'Invalid sale data format' });
     }
 
-    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = xlsx.utils.sheet_to_json(sheet);
+    // Create a new SaleEnquiry document
+    const newSaleEnquiry = new SaleEnquiry({
+      customer: new mongoose.Types.ObjectId(saleData.customer),
+      shippingAddress: {
+        street: saleData.shippingAddress.street,
+        city: saleData.shippingAddress.city,
+        state: saleData.shippingAddress.state,
+        zipCode: saleData.shippingAddress.zipCode,
+        country: saleData.shippingAddress.country
+      },
+      billingAddress: {
+        street: saleData.billingAddress.street,
+        city: saleData.billingAddress.city,
+        state: saleData.billingAddress.state,
+        zipCode: saleData.billingAddress.zipCode,
+        country: saleData.billingAddress.country
+      },
+      freight: saleData.freight,
+      gstPercent: saleData.gstPercent,
+      status: saleData.status,
+      items: saleData.items.map(item => ({
+        piece: new mongoose.Types.ObjectId(item.piece),
+        pieceNo: item.pieceNo,
+        saleLength: item.saleLength,
+        saleWidth: item.saleWidth,
+        saleAreaPerPiece: item.saleAreaPerPiece,
+        pricePerUnitArea: item.pricePerUnitArea
+      }))
+    });
+    console.log(newSaleEnquiry);
 
-    const groupedData = data.reduce((acc, row) => {
-      if (!acc[row['Customer ID']]) {
-        acc[row['Customer ID']] = {
-          customer: row['Customer ID'],
-          deliveryAddress: {
-            street: row['Street'],
-            city: row['City'],
-            state: row['State'],
-            zipCode: row['Zip Code'],
-            country: row['Country']
-          },
-          freight: row['Freight'],
-          gstPercent: row['GST Percent'],
-          status: row['Status'],
-          items: []
-        };
-      }
-      acc[row['Customer ID']].items.push({
-        piece: row['Piece ID'],
-        pieceNo: row['Piece No'],
-        saleLength: row['Sale Length'],
-        saleWidth: row['Sale Width'],
-        saleAreaPerPiece: row['Sale Area Per Piece'],
-        pricePerUnitArea: row['Price Per Unit Area']
-      });
-      return acc;
-    }, {});
+    // Save the new SaleEnquiry
+    const savedSaleEnquiry = await newSaleEnquiry.save();
 
-    const saleEnquiries = await Promise.all(
-      Object.values(groupedData).map(data => new SaleEnquiry(data).save())
-    );
-
-    res.status(201).json({ message: `${saleEnquiries.length} sale enquiries created` });
+    res.status(201).json({ 
+      message: 'Sale enquiry created successfully', 
+      saleEnquiry: savedSaleEnquiry 
+    });
   } catch (error) {
+    console.error('Error creating sale enquiry:', error);
     res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getAllSaleEnquiries = async (req, res) => {
+  try {
+    const saleEnquiries = await SaleEnquiry.find()
+      .populate('customer', 'name email phoneNumber')
+      .populate('items.piece', 'pieceNo');
+
+    res.status(200).json(saleEnquiries);
+  } catch (error) {
+    console.error('Error fetching sale enquiries:', error);
+    res.status(500).json({ message: 'Error fetching sale enquiries' });
   }
 };

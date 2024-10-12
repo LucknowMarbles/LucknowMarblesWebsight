@@ -8,6 +8,7 @@ import SignUp from './pages/SignUp';
 import Navbar from './pages/NavBar';
 import AdminPanel from './pages/AdminPanel';
 import ShoppingCart from './pages/ShoppingCart';
+import CustomerOrders from './pages/CustomerOrders';
 
 function App() {
   const [cart, setCart] = useState([]);
@@ -23,6 +24,7 @@ function App() {
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/cart" element={<ShoppingCart cart={cart} setCart={setCart} />} />
+        <Route path="/orders" element={<CustomerOrders />} />
       </Routes>
     </Router>
   );
