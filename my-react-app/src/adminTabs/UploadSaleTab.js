@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Form, Input, Select, InputNumber, Button, AutoComplete, Checkbox, Table, Modal } from 'antd';
+import { Form, Input, Select, InputNumber, Button, AutoComplete, Checkbox, Table, Modal, message, Space } from 'antd';
 import { Autocomplete } from '@react-google-maps/api';
 import UploadExcel from '../components/UploadExcel';
+import CreateCustomerForm from '../components/CreateCustomerForm';
+import AddressForm from '../components/AddressForm';
+import EcommerceProductForm from '../components/EcommerceForm';
+import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -40,20 +44,14 @@ function UploadSaleTab() {
   const [billingCityInput, setBillingCityInput] = useState('');
   const [autocomplete, setAutocomplete] = useState(null);
   const [selectedPieces, setSelectedPieces] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newCustomerData, setNewCustomerData] = useState({
-    name: '',
-    email: '',
-    phoneNumber: '',
-  });
   const [sameAsBilling, setSameAsBilling] = useState(true);
+  const [shippingAddress, setShippingAddress] = useState({});
+  const [billingAddress, setBillingAddress] = useState({});
+  const [isEcommerceProduct, setIsEcommerceProduct] = useState(false);
+  const [saleItems, setSaleItems] = useState([]);
 
   useEffect(() => {
     fetchProducts();
-    fetchCustomers();
   }, []);
 
   useEffect(() => {
@@ -80,6 +78,7 @@ function UploadSaleTab() {
   const fetchBatches = async (productId) => {
     try {
       const response = await axios.get(`http://localhost:5001/api/pieces/unique-batches/${productId}`);
+      console.log(response)
       setBatches(response.data.data);
     } catch (error) {
       console.error('Error fetching batches:', error);
@@ -95,69 +94,76 @@ function UploadSaleTab() {
     }
   };
 
-  const fetchCustomers = async () => {
+  const handleAddProduct = () => {
+    setSaleItems([...saleItems, { productId: null, isEcommerce: false, quantity: 1, pieces: [] }]);
+  };
+
+  const handleRemoveProduct = (index) => {
+    const newSaleItems = [...saleItems];
+    newSaleItems.splice(index, 1);
+    setSaleItems(newSaleItems);
+  };
+
+  const handleProductChange = async (productId, index) => {
     try {
-      const response = await axios.get('http://localhost:5001/api/users/customers');
-      setCustomers(response.data);
+      const response = await axios.get(`http://localhost:5001/api/products/product/${productId}`);
+      const newSaleItems = [...saleItems];
+      newSaleItems[index] = {
+        productId,
+        isEcommerce: response.data.isEcommerce,
+        quantity: 1,
+        pieces: []
+      };
+      setSaleItems(newSaleItems);
+
+      if (!response.data.isEcommerce) {
+        fetchBatches(productId);
+      }
     } catch (error) {
-      console.error('Error fetching customers:', error);
+      console.error('Error fetching product details:', error);
+      message.error('Failed to fetch product details');
     }
   };
 
-  const handleProductChange = (productId) => {
-    setSelectedProduct(productId);
-    setSelectedBatch(null);
-    setManualSaleData(prevData => ({
-      ...prevData,
-      items: []
-    }));
+  const handleQuantityChange = (value, index) => {
+    const newSaleItems = [...saleItems];
+    newSaleItems[index].quantity = value;
+    setSaleItems(newSaleItems);
   };
 
-  const handleBatchChange = (value) => {
+  const handleBatchChange = (value, index) => {
     setSelectedBatch(value);
-    setSelectedPieces([]);
-    setManualSaleData(prevData => ({
-      ...prevData,
-      items: []
-    }));
+    fetchPieces(value);
   };
 
-  const handlePieceSelect = (pieceId, checked) => {
+  const handlePieceSelect = (pieceId, checked, index) => {
+    const newSaleItems = [...saleItems];
     if (checked) {
-      setSelectedPieces(prev => [...prev, pieceId]);
-      setManualSaleData(prevData => ({
-        ...prevData,
-        items: [...prevData.items, { pieceId, pieceNo: '', saleLength: 0, saleWidth: 0, saleAreaPerPiece: 0, pricePerUnitArea: 0 }]
-      }));
+      newSaleItems[index].pieces.push({ pieceId, saleLength: 0, saleWidth: 0, saleAreaPerPiece: 0, pricePerUnitArea: 0 });
     } else {
-      setSelectedPieces(prev => prev.filter(id => id !== pieceId));
-      setManualSaleData(prevData => ({
-        ...prevData,
-        items: prevData.items.filter(item => item.pieceId !== pieceId)
-      }));
+      newSaleItems[index].pieces = newSaleItems[index].pieces.filter(piece => piece.pieceId !== pieceId);
     }
+    setSaleItems(newSaleItems);
   };
 
-  const handlePieceLengthChange = (pieceId, value) => {
-    setManualSaleData(prevData => ({
-      ...prevData,
-      items: prevData.items.map(item => 
-        item.pieceId === pieceId 
-          ? { ...item, saleLength: value, saleAreaPerPiece: value * item.saleWidth } 
-          : item
-      )
-    }));
+  const handlePieceLengthChange = (pieceId, value, index) => {
+    const newSaleItems = [...saleItems];
+    const piece = newSaleItems[index].pieces.find(p => p.pieceId === pieceId);
+    if (piece) {
+      piece.saleLength = value;
+      piece.saleAreaPerPiece = value * piece.saleWidth;
+    }
+    setSaleItems(newSaleItems);
   };
 
-  const handlePieceWidthChange = (pieceId, value) => {
-    setManualSaleData(prevData => ({
-      ...prevData,
-      items: prevData.items.map(item => 
-        item.pieceId === pieceId 
-          ? { ...item, saleWidth: value, saleAreaPerPiece: item.saleLength * value } 
-          : item
-      )
-    }));
+  const handlePieceWidthChange = (pieceId, value, index) => {
+    const newSaleItems = [...saleItems];
+    const piece = newSaleItems[index].pieces.find(p => p.pieceId === pieceId);
+    if (piece) {
+      piece.saleWidth = value;
+      piece.saleAreaPerPiece = piece.saleLength * value;
+    }
+    setSaleItems(newSaleItems);
   };
 
   const handleManualSaleDataChange = (field, value, index = null) => {
@@ -191,17 +197,20 @@ function UploadSaleTab() {
       const token = localStorage.getItem('token');
       
       const saleData = {
-        customer: selectedCustomer,
+        customer: manualSaleData.customerId,
         shippingAddress: manualSaleData.shippingAddress,
         billingAddress: sameAsBilling ? manualSaleData.shippingAddress : manualSaleData.billingAddress,
-        items: manualSaleData.items.map(item => ({
-          piece: item.pieceId,
-          pieceNo: item.pieceNo,
-          saleLength: item.saleLength,
-          saleWidth: item.saleWidth,
-          saleAreaPerPiece: item.saleAreaPerPiece,
-          pricePerUnitArea: item.pricePerUnitArea
-        })),
+        items: saleItems.flatMap(item => 
+          item.isEcommerce 
+            ? [{ product: item.productId, quantity: item.quantity }]
+            : item.pieces.map(piece => ({
+                piece: piece.pieceId,
+                saleLength: piece.saleLength,
+                saleWidth: piece.saleWidth,
+                saleAreaPerPiece: piece.saleAreaPerPiece,
+                pricePerUnitArea: piece.pricePerUnitArea
+              }))
+        ),
         freight: manualSaleData.freight,
         gstPercent: manualSaleData.gstPercent,
         status: manualSaleData.status
@@ -241,7 +250,6 @@ function UploadSaleTab() {
         status: 'Pending',
         items: []
       });
-      setSelectedCustomer(null);
       setSelectedProduct(null);
       setSelectedBatch(null);
       setSelectedPieces([]);
@@ -267,56 +275,6 @@ function UploadSaleTab() {
     }
   };
 
-  const fillAddressFields = (place, addressType) => {
-    let street = '';
-    let city = addressType === 'shipping' ? shippingCityInput : billingCityInput;
-    let state = '';
-    let zipCode = '';
-    let country = '';
-
-    for (const component of place.address_components) {
-      const componentType = component.types[0];
-
-      switch (componentType) {
-        case 'street_number':
-          street = `${component.long_name} ${street}`;
-          break;
-        case 'route':
-          street += component.short_name;
-          break;
-        case 'postal_code':
-          zipCode = component.long_name;
-          break;
-        case 'locality':
-          if (!city) city = component.long_name;
-          break;
-        case 'administrative_area_level_1':
-          state = component.long_name;
-          break;
-        case 'country':
-          country = component.long_name;
-          break;
-      }
-    }
-
-    setManualSaleData(prevData => ({
-      ...prevData,
-      [addressType === 'shipping' ? 'shippingAddress' : 'billingAddress']: {
-        street,
-        city,
-        state,
-        zipCode,
-        country
-      }
-    }));
-
-    if (addressType === 'shipping') {
-      setShippingAddressInput(place.formatted_address);
-    } else {
-      setBillingAddressInput(place.formatted_address);
-    }
-  };
-
   const handleCityChange = (e, addressType) => {
     if (addressType === 'shipping') {
       setShippingCityInput(e.target.value);
@@ -332,47 +290,27 @@ function UploadSaleTab() {
     }));
   };
 
-  const handleCustomerChange = (value) => {
-    if (value === 'new') {
-      setIsNewCustomer(true);
-      setIsModalVisible(true);
-    } else {
-      setIsNewCustomer(false);
-      setSelectedCustomer(value);
-      const customer = customers.find(c => c._id === value);
-      if (customer) {
-        setManualSaleData(prevData => ({
-          ...prevData,
-          customerId: customer._id,
-          // You might want to update other fields based on the customer data
-        }));
-      }
-    }
-  };
-
-  const handleNewCustomerInputChange = (field, value) => {
-    setNewCustomerData(prevData => ({
+  const handleCustomerCreated = (newCustomer) => {
+    setManualSaleData(prevData => ({
       ...prevData,
-      [field]: value
+      customerId: newCustomer._id,
     }));
   };
 
-  const handleCreateNewCustomer = async () => {
-    try {
-      const response = await axios.post('http://localhost:5001/api/customers', newCustomerData);
-      const newCustomer = response.data;
-      setCustomers(prevCustomers => [...prevCustomers, newCustomer]);
-      setSelectedCustomer(newCustomer._id);
-      setManualSaleData(prevData => ({
-        ...prevData,
-        customerId: newCustomer._id,
-      }));
-      setIsModalVisible(false);
-      setIsNewCustomer(false);
-    } catch (error) {
-      console.error('Error creating new customer:', error);
-      alert('Failed to create new customer');
-    }
+  const handleShippingAddressChange = (address) => {
+    setShippingAddress(address);
+    setManualSaleData(prevData => ({
+      ...prevData,
+      shippingAddress: address
+    }));
+  };
+
+  const handleBillingAddressChange = (address) => {
+    setBillingAddress(address);
+    setManualSaleData(prevData => ({
+      ...prevData,
+      billingAddress: address
+    }));
   };
 
   const columns = [
@@ -417,81 +355,10 @@ function UploadSaleTab() {
         <UploadExcel uploadType="sale" />
       ) : (
         <Form layout="vertical">
-          <Form.Item label="Customer">
-            <Select
-              value={selectedCustomer}
-              onChange={handleCustomerChange}
-              placeholder="Select a customer"
-            >
-              {customers.map(customer => (
-                <Option key={customer._id} value={customer._id}>{customer.name}</Option>
-              ))}
-              <Option value="new">Create New Customer</Option>
-            </Select>
-          </Form.Item>
+          <CreateCustomerForm onCustomerCreated={handleCustomerCreated} />
 
           <h3>Shipping Address</h3>
-          <Form.Item label="City">
-            <Input
-              value={shippingCityInput}
-              onChange={(e) => handleCityChange(e, 'shipping')}
-            />
-          </Form.Item>
-          <Form.Item label="Address">
-            <Autocomplete
-              onLoad={(autocomplete) => setAutocomplete(autocomplete)}
-              onPlaceChanged={() => {
-                if (autocomplete !== null) {
-                  const place = autocomplete.getPlace();
-                  fillAddressFields(place, 'shipping');
-                }
-              }}
-              restrictions={{ country: "in" }}
-              fields={['address_components', 'formatted_address', 'geometry']}
-            >
-              <Input
-                value={shippingAddressInput}
-                onChange={(e) => setShippingAddressInput(e.target.value)}
-                placeholder="Enter shipping address"
-              />
-            </Autocomplete>
-          </Form.Item>
-          <Form.Item label="Street">
-            <Input 
-              value={manualSaleData.shippingAddress.street} 
-              onChange={(e) => setManualSaleData(prevData => ({
-                ...prevData,
-                shippingAddress: { ...prevData.shippingAddress, street: e.target.value }
-              }))} 
-            />
-          </Form.Item>
-          <Form.Item label="State">
-            <Input 
-              value={manualSaleData.shippingAddress.state} 
-              onChange={(e) => setManualSaleData(prevData => ({
-                ...prevData,
-                shippingAddress: { ...prevData.shippingAddress, state: e.target.value }
-              }))} 
-            />
-          </Form.Item>
-          <Form.Item label="Zip Code">
-            <Input 
-              value={manualSaleData.shippingAddress.zipCode} 
-              onChange={(e) => setManualSaleData(prevData => ({
-                ...prevData,
-                shippingAddress: { ...prevData.shippingAddress, zipCode: e.target.value }
-              }))} 
-            />
-          </Form.Item>
-          <Form.Item label="Country">
-            <Input 
-              value={manualSaleData.shippingAddress.country} 
-              onChange={(e) => setManualSaleData(prevData => ({
-                ...prevData,
-                shippingAddress: { ...prevData.shippingAddress, country: e.target.value }
-              }))} 
-            />
-          </Form.Item>
+          <AddressForm onAddressChange={handleShippingAddressChange} />
 
           <Form.Item>
             <Checkbox checked={sameAsBilling} onChange={(e) => setSameAsBilling(e.target.checked)}>
@@ -502,67 +369,7 @@ function UploadSaleTab() {
           {!sameAsBilling && (
             <>
               <h3>Billing Address</h3>
-              <Form.Item label="City">
-                <Input
-                  value={billingCityInput}
-                  onChange={(e) => handleCityChange(e, 'billing')}
-                />
-              </Form.Item>
-              <Form.Item label="Address">
-                <Autocomplete
-                  onLoad={(autocomplete) => setAutocomplete(autocomplete)}
-                  onPlaceChanged={() => {
-                    if (autocomplete !== null) {
-                      const place = autocomplete.getPlace();
-                      fillAddressFields(place, 'billing');
-                    }
-                  }}
-                  restrictions={{ country: "in" }}
-                  fields={['address_components', 'formatted_address', 'geometry']}
-                >
-                  <Input
-                    value={billingAddressInput}
-                    onChange={(e) => setBillingAddressInput(e.target.value)}
-                    placeholder="Enter billing address"
-                  />
-                </Autocomplete>
-              </Form.Item>
-              <Form.Item label="Street">
-                <Input 
-                  value={manualSaleData.billingAddress.street} 
-                  onChange={(e) => setManualSaleData(prevData => ({
-                    ...prevData,
-                    billingAddress: { ...prevData.billingAddress, street: e.target.value }
-                  }))} 
-                />
-              </Form.Item>
-              <Form.Item label="State">
-                <Input 
-                  value={manualSaleData.billingAddress.state} 
-                  onChange={(e) => setManualSaleData(prevData => ({
-                    ...prevData,
-                    billingAddress: { ...prevData.billingAddress, state: e.target.value }
-                  }))} 
-                />
-              </Form.Item>
-              <Form.Item label="Zip Code">
-                <Input 
-                  value={manualSaleData.billingAddress.zipCode} 
-                  onChange={(e) => setManualSaleData(prevData => ({
-                    ...prevData,
-                    billingAddress: { ...prevData.billingAddress, zipCode: e.target.value }
-                  }))} 
-                />
-              </Form.Item>
-              <Form.Item label="Country">
-                <Input 
-                  value={manualSaleData.billingAddress.country} 
-                  onChange={(e) => setManualSaleData(prevData => ({
-                    ...prevData,
-                    billingAddress: { ...prevData.billingAddress, country: e.target.value }
-                  }))} 
-                />
-              </Form.Item>
+              <AddressForm onAddressChange={handleBillingAddressChange} />
             </>
           )}
 
@@ -593,85 +400,88 @@ function UploadSaleTab() {
             </Select>
           </Form.Item>
 
-          <Form.Item label="Product">
-            <Select
-              value={selectedProduct}
-              onChange={(value) => handleProductChange(value)}
-              placeholder="Select a product"
-            >
-              {products.map(product => (
-                <Option key={product._id} value={product._id}>{product.name}</Option>
-              ))}
-            </Select>
+          <h3>E-commerce Products</h3>
+          <EcommerceProductForm />
+
+          {saleItems.map((item, index) => (
+            <div key={index}>
+              <Space style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                <Form.Item label="Product">
+                  <Select
+                    value={item.productId}
+                    onChange={(value) => handleProductChange(value, index)}
+                    placeholder="Select a product"
+                    style={{ width: 200 }}
+                  >
+                    {products.map(product => (
+                      <Option key={product._id} value={product._id}>{product.name}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                {item.isEcommerce ? (
+                  <Form.Item label="Quantity">
+                    <InputNumber
+                      min={1}
+                      value={item.quantity}
+                      onChange={(value) => handleQuantityChange(value, index)}
+                    />
+                  </Form.Item>
+                ) : (
+                  <>
+                    <Form.Item label="Batch">
+                      <Select
+                        value={selectedBatch}
+                        onChange={(value) => handleBatchChange(value, index)}
+                        placeholder="Select a batch"
+                        disabled={!item.productId}
+                        style={{ width: 200 }}
+                      >
+                        {batches.map(batch => (
+                          <Option key={batch} value={batch}>{batch}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+
+                    {selectedBatch && (
+                      <Form.Item label="Select Pieces">
+                        {availablePieces.map(piece => (
+                          <Checkbox
+                            key={piece._id}
+                            onChange={(e) => handlePieceSelect(piece._id, e.target.checked, index)}
+                            checked={item.pieces.some(p => p.pieceId === piece._id)}
+                          >
+                            {piece.pieceNo}
+                          </Checkbox>
+                        ))}
+                      </Form.Item>
+                    )}
+                  </>
+                )}
+
+                <MinusCircleOutlined onClick={() => handleRemoveProduct(index)} />
+              </Space>
+
+              {!item.isEcommerce && item.pieces.length > 0 && (
+                <Table
+                  dataSource={item.pieces}
+                  columns={columns}
+                  rowKey="pieceId"
+                  pagination={false}
+                />
+              )}
+            </div>
+          ))}
+
+          <Form.Item>
+            <Button type="dashed" onClick={handleAddProduct} block icon={<PlusOutlined />}>
+              Add Product
+            </Button>
           </Form.Item>
-
-          <Form.Item label="Batch">
-            <Select
-              value={selectedBatch}
-              onChange={handleBatchChange}
-              placeholder="Select a batch"
-              disabled={!selectedProduct}
-            >
-              {batches.map(batch => (
-                <Option key={batch} value={batch}>{batch}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          {selectedBatch && (
-            <Form.Item label="Select Pieces">
-              {availablePieces.map(piece => (
-                <Checkbox
-                  key={piece._id}
-                  onChange={(e) => handlePieceSelect(piece._id, e.target.checked)}
-                  checked={selectedPieces.includes(piece._id)}
-                >
-                  {piece.pieceNo}
-                </Checkbox>
-              ))}
-            </Form.Item>
-          )}
-
-          {manualSaleData.items.length > 0 && (
-            <Table
-              dataSource={manualSaleData.items}
-              columns={columns}
-              rowKey="pieceId"
-              pagination={false}
-            />
-          )}
 
           <Button onClick={handleManualSaleSubmit} type="primary" style={{ marginLeft: 10 }}>Submit Sale Data</Button>
         </Form>
       )}
-
-      <Modal
-        title="Create New Customer"
-        visible={isModalVisible}
-        onOk={handleCreateNewCustomer}
-        onCancel={() => setIsModalVisible(false)}
-      >
-        <Form layout="vertical">
-          <Form.Item label="Name">
-            <Input
-              value={newCustomerData.name}
-              onChange={(e) => handleNewCustomerInputChange('name', e.target.value)}
-            />
-          </Form.Item>
-          <Form.Item label="Email">
-            <Input
-              value={newCustomerData.email}
-              onChange={(e) => handleNewCustomerInputChange('email', e.target.value)}
-            />
-          </Form.Item>
-          <Form.Item label="Phone Number">
-            <Input
-              value={newCustomerData.phoneNumber}
-              onChange={(e) => handleNewCustomerInputChange('phoneNumber', e.target.value)}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 }

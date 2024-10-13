@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+const locationHistorySchema = new mongoose.Schema({
+  warehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
+  timestamp: { type: Date, default: Date.now },
+  reason: { type: String, enum: ['Purchase', 'Sale', 'Transfer', 'Chalan'] }
+}, { _id: false });
+
 const pieceSchema = new mongoose.Schema({
   customerLength: { type: Number, required: true },
   customerWidth: { type: Number, required: true },
@@ -12,9 +18,11 @@ const pieceSchema = new mongoose.Schema({
   purchaseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Purchase', required: true },
   purchaseBillNo: { type: String, required: true }, 
   enquiryProductNo: { type: String },
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // Add this line
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
   productName: { type: String },
   isSold: { type: Boolean, default: false },
+  currentWarehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
+  locationHistory: [locationHistorySchema]
 }, { timestamps: true });
 
 const Piece = mongoose.model('Piece', pieceSchema);

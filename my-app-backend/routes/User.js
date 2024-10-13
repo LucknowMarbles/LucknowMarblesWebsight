@@ -1,5 +1,6 @@
 const express = require('express');
 const { 
+  VarifyCustomer,
   getAllCustomers,
   registerUser, 
   createCustomer,
@@ -31,6 +32,7 @@ router.put('/:userId/disapprove', authMiddleware, adminMiddleware, disapproveUse
 router.post('/create-customer', createCustomer);
 router.post('/convert-to-user', convertToUser);
 router.get('/all', getAllUsers); // Add this line to create the route
+router.get('/verify/:phoneNumber', VarifyCustomer);
 
 router.put('/:userId/type', authMiddleware, adminMiddleware, async (req, res) => {
   try {

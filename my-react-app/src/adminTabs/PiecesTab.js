@@ -1,18 +1,40 @@
-import {  message } from 'antd';
+import { message, Checkbox, Input, Button, Select } from 'antd';
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
+const { Option } = Select;
 
 function PiecesTab() {
   const [pieces, setPieces] = useState([]);
   const [batchNoFilter, setBatchNoFilter] = useState('');
-  const [productNameFilter, setproductNameFilter] = useState('');
+  const [productNameFilter, setProductNameFilter] = useState('');
+  const [showUnsoldOnly, setShowUnsoldOnly] = useState(false);
+  const [warehouseFilter, setWarehouseFilter] = useState('');
+  const [warehouses, setWarehouses] = useState([]);
+
+  useEffect(() => {
+    // Fetch warehouses when component mounts
+    const fetchWarehouses = async () => {
+      try {
+        const response = await axios.get('http://localhost:5001/api/warehouses');
+        setWarehouses(response.data);
+      } catch (error) {
+        console.error('Error fetching warehouses:', error);
+        message.error('Failed to fetch warehouses');
+      }
+    };
+
+    fetchWarehouses();
+  }, []);
+
   const fetchPieces = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:5001/api/pieces', {
         params: {
           batchNo: batchNoFilter,
-          productName: productNameFilter
+          productName: productNameFilter,
+          unsoldOnly: showUnsoldOnly.toString(),
+          warehouseId: warehouseFilter
         }
       });
       setPieces(response.data.data);
@@ -20,29 +42,46 @@ function PiecesTab() {
       console.error('Error fetching pieces:', error);
       message.error('Failed to fetch pieces');
     }
-  }, [batchNoFilter, productNameFilter]);
+  }, [batchNoFilter, productNameFilter, showUnsoldOnly, warehouseFilter]);
 
   useEffect(() => {
     fetchPieces();
-  }, [batchNoFilter, productNameFilter, fetchPieces]);
+  }, [fetchPieces]);
 
   return (
     <div className="pieces-section">
       <h2>Pieces</h2>
       <div className="filter-inputs">
-        <input
-          type="text"
+        <Input
           placeholder="Batch No"
           value={batchNoFilter}
           onChange={(e) => setBatchNoFilter(e.target.value)}
+          style={{ width: 200, marginRight: 10 }}
         />
-        <input
-          type="text"
-          placeholder="Product ID"
+        <Input
+          placeholder="Product Name"
           value={productNameFilter}
-          onChange={(e) => setproductNameFilter(e.target.value)}
+          onChange={(e) => setProductNameFilter(e.target.value)}
+          style={{ width: 200, marginRight: 10 }}
         />
-        <button onClick={fetchPieces}>Filter</button>
+        <Select
+          placeholder="Select Warehouse"
+          value={warehouseFilter}
+          onChange={setWarehouseFilter}
+          style={{ width: 200, marginRight: 10 }}
+        >
+          <Option value="">All Warehouses</Option>
+          {warehouses.map(warehouse => (
+            <Option key={warehouse._id} value={warehouse._id}>{warehouse.name}</Option>
+          ))}
+        </Select>
+        <Checkbox
+          checked={showUnsoldOnly}
+          onChange={(e) => setShowUnsoldOnly(e.target.checked)}
+        >
+          Show Unsold Only
+        </Checkbox>
+        <Button onClick={fetchPieces} type="primary" style={{ marginLeft: 10 }}>Filter</Button>
       </div>
       {pieces && pieces.length > 0 ? (
         <table>
@@ -58,6 +97,8 @@ function PiecesTab() {
               <th>Thickness</th>
               <th>Is Defective</th>
               <th>Purchase Id</th>
+              <th>Sold</th>
+              <th>Current Warehouse</th>
             </tr>
           </thead>
           <tbody>
@@ -73,6 +114,8 @@ function PiecesTab() {
                 <td>{piece.thickness}</td>
                 <td>{piece.isDefective ? 'Yes' : 'No'}</td>
                 <td>{piece.purchaseId}</td>
+                <td>{piece.isSold ? 'Yes' : 'No'}</td>
+                <td>{piece.currentWarehouse ? piece.currentWarehouse.name : 'N/A'}</td>
               </tr>
             ))}
           </tbody>

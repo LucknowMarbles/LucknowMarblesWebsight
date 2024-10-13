@@ -1,9 +1,9 @@
 const SaleEnquiry = require('../modals/Sale');
+const Piece = require('../modals/Piece'); // Make sure to import the Piece model
 const mongoose = require('mongoose');
 
 exports.uploadSaleEnquiries = async (req, res) => {
   try {
-    console.log(req.body);
     const saleData = req.body;
 
     // Validate the incoming data
@@ -40,13 +40,22 @@ exports.uploadSaleEnquiries = async (req, res) => {
         pricePerUnitArea: item.pricePerUnitArea
       }))
     });
-    console.log(newSaleEnquiry);
+    
 
     // Save the new SaleEnquiry
     const savedSaleEnquiry = await newSaleEnquiry.save();
 
+    // Update the sold status of the pieces
+    const pieceIds = savedSaleEnquiry.items.map(item => item.piece);
+    console.log(pieceIds);
+    await Piece.updateMany(
+      { _id: { $in: pieceIds } },
+      { $set: { isSold: true } }
+    );
+    console.log(Piece);
+
     res.status(201).json({ 
-      message: 'Sale enquiry created successfully', 
+      message: 'Sale enquiry created successfully and pieces marked as sold', 
       saleEnquiry: savedSaleEnquiry 
     });
   } catch (error) {

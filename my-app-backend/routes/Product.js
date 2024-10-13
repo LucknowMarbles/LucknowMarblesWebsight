@@ -6,7 +6,7 @@ const productController = require('../controller/productController');
 router.get('/', productController.getProducts); // Changed from '/products' to '/'
 
 // GET a single product
-router.get('/:id', productController.getProductById);
+router.get('/product/:id', productController.getProductById);
 
 // POST a new product
 router.post('/', productController.createProduct); // Removed upload.single('image')
@@ -19,6 +19,8 @@ router.delete('/:id', productController.deleteProduct);
 
 // GET e-commerce products
 router.get('/ecommerce', productController.getEcommerceProducts);
+
+
 
 module.exports = router;
 

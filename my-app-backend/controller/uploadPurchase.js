@@ -16,36 +16,22 @@ const uploadPurchase = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    //console.log('File received:', req.file);
-    //console.log('File buffer length:', req.file.buffer.length);
 
-    // Change this line
     const workbook = await readXlsxFile(req.file.buffer);
-    //console.log(workbook);
-    //console.log('Sheet names:', workbook);
-
-    // Remove or comment out these lines as they're not applicable
-    // if (workbook.SheetNames.length === 0) {
-    //   return res.status(400).json({ message: 'No sheets found in the uploaded file' });
-    // }
-    // 
-    // const sheetName = workbook.SheetNames[0];
-    // const sheet = workbook.Sheets[sheetName];
-
-
 
     if (workbook.length === 0) {
       return res.status(400).json({ message: 'No sheets found in the uploaded file' });
     }
     const sheet = workbook;
-    //const data = xlsx.utils.sheet_to_json(sheet);
     const purchase = sheet.map(row => 
         Purchase({
         purchaseDate: new Date(),
         supplier: row[11],
         billNumber: row[12],
         totalAmount: 0,
-        paymentMethod: row[13]}));
+        paymentMethod: row[13],
+        ecommerceProducts: []
+    }));
     const pieces = sheet.map((row,i) => ({
       batchNo: row[0],
       pieceNo: row[1],
@@ -59,11 +45,16 @@ const uploadPurchase = async (req, res) => {
       purchaseBillNo: row[9],
       enquiryProductNo: row[10],
       productId: new mongoose.Types.ObjectId(row[14]),
-      productName: row[15]
+      productName: row[15],
+      currentWarehouse: new mongoose.Types.ObjectId(row[16]), // Assuming warehouse ID is provided in the Excel
+      locationHistory: [{
+        warehouse: new mongoose.Types.ObjectId(row[16]),
+        timestamp: new Date(),
+        reason: row[17]
+      }]
     }));
-    
 
-    console.log('Processed pieces:', pieces); // Log the processed data
+    console.log('Processed pieces:', pieces);
 
     await Piece.insertMany(pieces);
 
@@ -74,29 +65,7 @@ const uploadPurchase = async (req, res) => {
   }
 };
 
-const uploadSale = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
 
-    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(sheet);
-
-    // Process sale data here
-    console.log('Sale data:', data);  // Log the data for debugging
-
-    // TODO: Implement the logic to process and save the sale data
-    // For now, we'll just return a success message
-
-    res.status(200).json({ message: 'Sale data uploaded successfully', count: data.length });
-  } catch (error) {
-    console.error('Error uploading sale data:', error);
-    res.status(500).json({ message: 'Error uploading sale data', error: error.message });
-  }
-};
 
 const generateInvoice = async (req, res) => {
   try {
@@ -134,18 +103,30 @@ const generateInvoice = async (req, res) => {
 
 const DisplayPieces = async (req, res) => {
   try {
-    const { batchNo, productName } = req.query;
+    const { batchNo, productName, unsoldOnly, warehouseId } = req.query;
     let query = {};
-    if (batchNo) query.batchNo = batchNo;
-    if (productName) query.productName = productName;
+    if (warehouseId) {
+      query.currentWarehouse = new mongoose.Types.ObjectId(warehouseId);
+    }
+    if (batchNo) {
+      query.batchNo = { $regex: batchNo, $options: 'i' };
+    }
 
-    const pieces = await Piece.find(query).populate('productName', 'name');
+    if (productName) {
+      query.productName = { $regex: productName, $options: 'i' };
+    }
+
+    const pieces1 = await Piece.find(query);
+    const pieces  = await pieces1.filter(piece =>{ 
+      if (unsoldOnly === 'true'){
+          return piece.isSold === false;
+      }
+      else return true;
+    });
     
-    // Ensure we're sending a valid JSON response
     res.json({ success: true, data: pieces });
   } catch (error) {
     console.error('Error fetching pieces:', error);
-    // Ensure we're sending a valid JSON response even in case of an error
     res.status(500).json({ success: false, message: 'Error fetching pieces', error: error.message });
   }
 };
@@ -189,4 +170,67 @@ const getUniqueBatchesForProduct = async (req, res) => {
     }
   };
 
-module.exports = { uploadPurchase, uploadSale, generateInvoice, DisplayPieces, getUniqueBatchesForProduct,getPiecesByBatch, getPieceById};
+const updatePieceLocation = async (pieceId, warehouseId, reason) => {
+  try {
+    const piece = await Piece.findById(pieceId);
+    if (!piece) {
+      throw new Error('Piece not found');
+    }
+
+    piece.currentWarehouse = warehouseId;
+    piece.locationHistory.push({
+      warehouse: warehouseId,
+      timestamp: new Date(),
+      reason: reason
+    });
+
+    await piece.save();
+  } catch (error) {
+    console.error('Error updating piece location:', error);
+    throw error;
+  }
+};
+
+// Example usage when creating a chalan
+const createChalan = async (req, res) => {
+  try {
+    const { pieceIds, destinationWarehouseId } = req.body;
+
+    // Create chalan logic here...
+
+    // Update location for each piece in the chalan
+    for (const pieceId of pieceIds) {
+      await updatePieceLocation(pieceId, destinationWarehouseId, 'Chalan');
+    }
+
+    res.status(200).json({ message: 'Chalan created successfully' });
+  } catch (error) {
+    console.error('Error creating chalan:', error);
+    res.status(500).json({ message: 'Error creating chalan', error: error.toString() });
+  }
+};
+
+const getAllPurchases = async (req, res) => {
+  try {
+    const purchases = await Purchase.find()
+      .populate('ecommerceProducts.product', 'name') // Populate product names
+      .sort({ purchaseDate: -1 }); // Sort by purchase date, newest first
+
+    res.status(200).json({ success: true, data: purchases });
+  } catch (error) {
+    console.error('Error fetching purchases:', error);
+    res.status(500).json({ success: false, message: 'Error fetching purchases', error: error.message });
+  }
+};
+
+module.exports = { 
+  uploadPurchase, 
+  generateInvoice, 
+  DisplayPieces, 
+  getUniqueBatchesForProduct,
+  getPiecesByBatch, 
+  getPieceById,
+  createChalan,
+  updatePieceLocation,
+  getAllPurchases
+};

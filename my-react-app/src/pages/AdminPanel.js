@@ -14,6 +14,9 @@ import GenerateInvoiceTab from '../adminTabs/GenerateInvoiceTab';
 import CalendarTab from '../adminTabs/UploadSaleTab';
 import { LoadScript } from '@react-google-maps/api';
 import { FaBars, FaTimes } from 'react-icons/fa';
+import CreateWarehouse from '../adminTabs/WarehouswTab';
+import TransactionReportTab from '../adminTabs/TransactionReportTab';
+import CreateTransactionTab from '../adminTabs/CreateTransactionTab';
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyCsNh45zRUdhDiJTYblG4vw5gAtWlbTf_4";
 
@@ -70,7 +73,10 @@ function AdminPanel() {
     { id: 'uploadSale', label: 'Upload Sale' },
     { id: 'generateInvoice', label: 'Generate Invoice' },
     { id: 'calendar', label: 'Calendar' },
-    { id: 'saleData', label: 'Sales' }
+    { id: 'saleData', label: 'Sales' },
+    {id: 'warehouse', label: 'CreateWarehouse'},
+    { id: 'createTransaction', label: 'Create Transaction' },
+    { id: 'transactionReport', label: 'Transaction Report' },
   ];
 
   const toggleSidebar = () => {
@@ -79,7 +85,6 @@ function AdminPanel() {
 
   return (
     <div className="admin-panel">
-      <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
         <header className="admin-header">
           <button className="sidebar-toggle" onClick={toggleSidebar}>
             {sidebarOpen ? <FaTimes /> : <FaBars />}
@@ -113,8 +118,10 @@ function AdminPanel() {
           {activeTab === 'generateInvoice' && <GenerateInvoiceTab />}
           {activeTab === 'calendar' && <CalendarTab />}
           {activeTab === 'saleData'&& <SaleTab />}
+          {activeTab === 'warehouse' && <CreateWarehouse />}
+          {activeTab === 'createTransaction' && <CreateTransactionTab />}
+          {activeTab === 'transactionReport' && <TransactionReportTab />}
         </main>
-      </LoadScript>
     </div>
   );
 }

@@ -239,8 +239,21 @@
     res.status(400).json({ error: error.message });
   }
 };
+const VarifyCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findOne({ phoneNumber: req.params.phoneNumber });
+    if (customer) {
+      res.json(customer);
+    } else {
+      res.json(null);
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error verifying customer', error: error.message });
+  }
+};
 
    module.exports = { 
+    VarifyCustomer,
      createCustomer,
      convertToUser,
      registerUser, 

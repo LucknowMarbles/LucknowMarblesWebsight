@@ -9,8 +9,8 @@ function CustomerOrders() {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [userType, setUserType] = useState('customer');
 
-  const GOOGLE_GMAIL = "AIzaSyCsNh45zRUdhDiJTYblG4vw5gAtWlbTf_4";
 
   useEffect(() => {
     const token = localStorage.getItem('customerToken');
@@ -30,8 +30,9 @@ function CustomerOrders() {
 
   const verifyOTP = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/api/otp/verify-otp', { contact, otp });
+      const response = await axios.post('http://localhost:5001/api/otp/verify-otp', { contact, otp, type: userType });
       localStorage.setItem('customerToken', response.data.token);
+      localStorage.setItem('userType', response.data.type);
       fetchOrders(response.data.token);
     } catch (error) {
       setError('Invalid OTP. Please try again.');
@@ -62,6 +63,10 @@ function CustomerOrders() {
                 onChange={(e) => setContact(e.target.value)}
                 placeholder="Enter phone number or email"
               />
+              <select value={userType} onChange={(e) => setUserType(e.target.value)}>
+                <option value="customer">Customer</option>
+                <option value="vendor">Vendor</option>
+              </select>
               <button onClick={sendOTP}>Send OTP</button>
             </>
           ) : (

@@ -79,21 +79,14 @@ const deleteProduct = async (req, res) => {
 
 const getEcommerceProducts = async (req, res) => {
   try {
-    const { longitude, latitude } = req.query;
-    const products = await Product.find({
-      isEcommerce: true,
-      location: {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(longitude), parseFloat(latitude)]
-          },
-          $maxDistance: 100000 // 100km in meters
-        }
-      }
-    });
+    let query = { isEcommerce: true };
+    const products = await Product.find(query);
+  
     res.json(products);
-  } catch (error) {
+
+
+    }
+ catch (error) {
     res.status(500).json({ error: error.message });
   }
 };

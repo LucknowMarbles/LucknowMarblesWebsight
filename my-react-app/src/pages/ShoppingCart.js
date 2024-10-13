@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { GooglePayButton } from '@google-pay/button-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { Form, Input, Button, message } from 'antd';
+import CreateCustomerForm from '../components/CreateCustomerForm';
 import '../ShoppingCart.css';
 
 const ShoppingCart = ({ cart, setCart }) => {
@@ -16,6 +18,10 @@ const ShoppingCart = ({ cart, setCart }) => {
   const [orderId, setOrderId] = useState(null);
   const [utrCode, setUtrCode] = useState('');
   const [showUTRInput, setShowUTRInput] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [showCreateCustomer, setShowCreateCustomer] = useState(true);
+  const [customerVerified, setCustomerVerified] = useState(false);
 
   const deliveryCharge = 50;
   const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
@@ -296,23 +302,47 @@ const ShoppingCart = ({ cart, setCart }) => {
     </div>
   );
 
-  if (cart.length === 0) {
-    return <p className="empty-cart-message">Your cart is empty</p>;
-  }
+  const handlePhoneNumberChange = (e) => {
+    setPhoneNumber(e.target.value);
+  };
+
+  const handleCustomerCreated = (newCustomer) => {
+    setUserInfo({
+      email: newCustomer.email,
+      phoneNumber: newCustomer.phoneNumber,
+      address: newCustomer.address || ''
+    });
+    setCustomerVerified(true);
+    setShowCreateCustomer(false);
+    message.success('Customer created successfully');
+  };
 
   return (
     <div className="shopping-cart-container">
       <h2>Your Shopping Cart</h2>
-      {!orderComplete && !showUTRInput && (
+      {cart.length === 0 ? (
+        <p className="empty-cart-message">Your cart is empty</p>
+      ) : (
         <>
           {renderCartItems()}
           {renderOrderSummary()}
-          {!showQR && renderCheckoutForm()}
-          {showQR && renderUPIPayment()}
+          <div className="customer-form-container">
+            <h3>Customer Information</h3>
+            <CreateCustomerForm 
+              onCustomerCreated={handleCustomerCreated}
+              initialPhoneNumber={phoneNumber}
+            />
+          </div>
+          {customerVerified && (
+            <>
+              {!showQR && renderCheckoutForm()}
+              {showQR && renderUPIPayment()}
+            </>
+          )}
+          {showUTRInput && renderUTRInput()}
+          {orderComplete && renderOrderComplete()}
         </>
       )}
-      {showUTRInput && renderUTRInput()}
-      {orderComplete && renderOrderComplete()}
     </div>
   );
 };
