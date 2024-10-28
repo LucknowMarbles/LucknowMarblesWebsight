@@ -1,71 +1,71 @@
 const express = require('express');
 const multer = require('multer');
-const xlsx = require('xlsx');
-const readXlsxFile = require('read-excel-file/node');
 const Piece = require('../modals/Piece');
 const Purchase = require('../modals/Purchase');
+const Product = require('../modals/Product');
 
 const mongoose = require('mongoose');
 const router = express.Router();
 
 // Configure multer for memory storage
-const upload = multer({ storage: multer.memoryStorage() });
-
 const uploadPurchase = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
+    const purchase = new Purchase({
+      transactions: [], 
+      notes: req.body.notes,
+      paymentStatus: req.body.paymentStatus,
+      totalAmount: req.body.totalAmount, // You may want to calculate this based on the pieces
+      paymentMethod: req.body.paymentMethod,
+      purchaseDate: new Date(req.body.purchaseDate),
+      supplier: req.body.vendorName,
+      billNumber: req.body.billNumber,
+      ecommerceProducts: req.body.ecommerceProducts.map(product => ({
+        product: new mongoose.Types.ObjectId(product.product),
+        quantity: product.quantity,
+        warehouse: product.warehouse
+      }))
+    });
+    await purchase.save();
 
-    const workbook = await readXlsxFile(req.file.buffer);
-
-    if (workbook.length === 0) {
-      return res.status(400).json({ message: 'No sheets found in the uploaded file' });
-    }
-    const sheet = workbook;
-    const purchase = sheet.map(row => 
-        Purchase({
-        purchaseDate: new Date(),
-        supplier: row[11],
-        billNumber: row[12],
-        totalAmount: 0,
-        paymentMethod: row[13],
-        ecommerceProducts: []
-    }));
-    const pieces = sheet.map((row,i) => ({
-      batchNo: row[0],
-      pieceNo: row[1],
-      customerLength: parseInt(row[2]),
-      customerWidth: parseInt(row[3]),
-      traderLength: parseInt(row[4]),
-      traderWidth: parseInt(row[5]),
-      thickness: parseInt(row[6]),
-      isDefective: row[7].toLowerCase() === 'yes',
-      purchaseId: purchase[i]._id,
-      purchaseBillNo: row[9],
-      enquiryProductNo: row[10],
-      productId: new mongoose.Types.ObjectId(row[14]),
-      productName: row[15],
-      currentWarehouse: new mongoose.Types.ObjectId(row[16]), // Assuming warehouse ID is provided in the Excel
+    const pieces = req.body.pieces.map((piece) => ({
+      batchNo: piece.batchNo,
+      pieceNo: piece.pieceNo,
+      customerLength: parseInt(piece.customerLength),
+      customerWidth: parseInt(piece.customerWidth),
+      traderLength: parseInt(piece.traderLength),
+      traderWidth: parseInt(piece.traderWidth),
+      thickness: parseInt(piece.thickness),
+      isDefective: piece.isDefective.toLowerCase === 'yes',
+      purchaseId: purchase._id,
+      productId: new mongoose.Types.ObjectId(piece.productId),
+      currentWarehouse: new mongoose.Types.ObjectId(piece.currentWarehouse),
       locationHistory: [{
-        warehouse: new mongoose.Types.ObjectId(row[16]),
+        warehouse: new mongoose.Types.ObjectId(piece.currentWarehouse),
         timestamp: new Date(),
-        reason: row[17]
+        reason: 'Purchase'
       }]
     }));
 
-    console.log('Processed pieces:', pieces);
-
     await Piece.insertMany(pieces);
 
-    res.status(200).json({ message: 'Purchase data uploaded successfully', count: pieces.length });
+    // Update product quantities in warehouses
+    for (const ecommerceProduct of purchase.ecommerceProducts) {
+      await Product.findByIdAndUpdate(
+        ecommerceProduct.product,
+        {
+          $inc: {
+            [`warehouses.${ecommerceProduct.warehouse}`]: ecommerceProduct.quantity
+          }
+        }
+      );
+    }
+
+    res.status(200).json({ message: 'Purchase data uploaded successfully', purchaseId: purchase._id });
   } catch (error) {
     console.error('Error in uploadPurchase:', error);
     res.status(500).json({ message: 'Error uploading purchase data', error: error.toString() });
   }
 };
-
-
 
 const generateInvoice = async (req, res) => {
   try {

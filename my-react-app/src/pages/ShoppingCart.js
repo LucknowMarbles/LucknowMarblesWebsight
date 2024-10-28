@@ -10,7 +10,8 @@ const ShoppingCart = ({ cart, setCart }) => {
   const [userInfo, setUserInfo] = useState({
     email: '',
     phoneNumber: '',
-    address: ''
+    address: '',
+    _id: ''
   });
   const [paymentMethod, setPaymentMethod] = useState('');
   const [showQR, setShowQR] = useState(false);
@@ -63,6 +64,7 @@ const ShoppingCart = ({ cart, setCart }) => {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       };
 
+      console.log(orderData);
       const response = await axios.post('http://localhost:5001/api/orders', orderData, config);
       setOrderId(response.data._id);
 
@@ -169,6 +171,13 @@ const ShoppingCart = ({ cart, setCart }) => {
         value={userInfo.address}
         onChange={handleInputChange}
         placeholder="Delivery Address"
+        required
+      />
+      <textarea
+        name="_id"
+        value={userInfo._id}
+        onChange={handleInputChange}
+        placeholder="Customer ID"
         required
       />
       <h3>Payment Method</h3>
@@ -310,7 +319,8 @@ const ShoppingCart = ({ cart, setCart }) => {
     setUserInfo({
       email: newCustomer.email,
       phoneNumber: newCustomer.phoneNumber,
-      address: newCustomer.address || ''
+      address: newCustomer.address || '',
+      _id: newCustomer._id
     });
     setCustomerVerified(true);
     setShowCreateCustomer(false);

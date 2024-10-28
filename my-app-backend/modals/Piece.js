@@ -16,10 +16,7 @@ const pieceSchema = new mongoose.Schema({
   batchNo: { type: String, required: true },
   pieceNo: { type: String, required: true },
   purchaseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Purchase', required: true },
-  purchaseBillNo: { type: String, required: true }, 
-  enquiryProductNo: { type: String },
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-  productName: { type: String },
   isSold: { type: Boolean, default: false },
   currentWarehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
   locationHistory: [locationHistorySchema]

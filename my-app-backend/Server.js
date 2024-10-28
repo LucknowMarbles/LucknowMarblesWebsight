@@ -12,7 +12,10 @@ const saleEnquiryRoutes = require('./routes/SaleEnquiey');
 const otpRoutes = require('./routes/Otp');
 const transactionRoutes = require('./routes/Transactions');
 const warehouseRoutes = require('./routes/Warehouse');
+const transferRoutes = require('./routes/transfer');
 const app = express();
+
+
 
 // Enable CORS for all routes
 const corsOptions = {
@@ -38,6 +41,7 @@ app.use('/api/sale', saleEnquiryRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/warehouses', warehouseRoutes);
+app.use('/api/transfers', transferRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

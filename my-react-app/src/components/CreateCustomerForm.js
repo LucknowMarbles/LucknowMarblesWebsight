@@ -5,6 +5,7 @@ import axios from 'axios';
 const { Option } = Select;
 
 const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
+  const [customerId, setCustomerId] = useState('');
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -18,20 +19,29 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
 
   const verifyPhoneNumber = async () => {
     const phoneNumber = form.getFieldValue('phoneNumber');
-    console.log(phoneNumber)
     if (!phoneNumber) {
       message.error('Please enter a phone number');
       return;
     }
 
     setIsVerifying(true);
+    
     try {
       const response = await axios.get(`http://localhost:5001/api/users/verify/${phoneNumber}`);
       if (response.data) {
+        onCustomerCreated({
+          ...response.data,
+          customerId: response.data._id // Ensure customerId is set in the response
+        });
+        console.log(response.data);
         message.success('Existing customer found');
         setIsPhoneVerified(true);
         setIsExistingCustomer(true);
-        form.setFieldsValue(response.data);
+        setCustomerId(response.data._id);
+        form.setFieldsValue({
+          ...response.data,
+          customerId: response.data._id // Set the customer ID for existing customers
+        });
         setShowNewCustomerForm(false);
       } else {
         message.info('Phone number not found. Please create a new account.');
@@ -56,16 +66,17 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
 
     setIsLoading(true);
     try {
+      console.log(1);
       let response;
       if (isExistingCustomer) {
-        response = await axios.put(`http://localhost:5001/api/users/${values._id}`, values);
+        response = await axios.put(`http://localhost:5001/api/users/${values.customerId}`, values);
         message.success('Customer information updated successfully');
       } else {
         response = await axios.post('http://localhost:5001/api/users/create-customer', values);
         message.success('New customer created successfully');
       }
       form.resetFields();
-      onCustomerCreated(response.data);
+
       setShowNewCustomerForm(false);
       setIsPhoneVerified(false);
     } catch (error) {
@@ -77,21 +88,20 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={onFinish}>
+    <Form 
+      form={form} 
+      layout="vertical" 
+      onFinish={onFinish}
+      id="create-customer-form"
+    >
       <Form.Item
         name="phoneNumber"
         label="Phone Number"
         rules={[{ required: true, message: 'Please input the phone number!' }]}
       >
         <Input.Group compact>
-          <Form.Item
-            name="phoneNumber"
-            noStyle
-          >
-            <Input 
-              style={{ width: 'calc(100% - 100px)' }} 
-              disabled={isPhoneVerified}
-            />
+          <Form.Item name="phoneNumber" noStyle>
+            <Input style={{ width: 'calc(100% - 100px)' }} disabled={isPhoneVerified} />
           </Form.Item>
           <Button 
             onClick={verifyPhoneNumber} 
@@ -104,16 +114,20 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
         </Input.Group>
       </Form.Item>
 
+      <Form.Item name="customerId" hidden>
+        <Input />
+      </Form.Item>
+
       {isExistingCustomer && (
         <>
           <p>Existing customer found. You can update your information below:</p>
+          <Form.Item name="customerId" label="customerId">
+            <Input />
+          </Form.Item>
           <Form.Item name="username" label="Username">
             <Input disabled />
           </Form.Item>
           <Form.Item name="email" label="Email">
-            <Input />
-          </Form.Item>
-          <Form.Item name="_id" hidden>
             <Input />
           </Form.Item>
           <Form.Item>
@@ -153,9 +167,6 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
               <Option value="customer">Customer</Option>
               <Option value="vendor">Vendor</Option>
             </Select>
-          </Form.Item>
-          <Form.Item name="_id" hidden>
-            <Input />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={isLoading}>

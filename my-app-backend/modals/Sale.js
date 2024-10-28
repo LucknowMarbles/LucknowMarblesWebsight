@@ -27,6 +27,7 @@ const saleEnquirySchema = new mongoose.Schema({
     country: { type: String, required: true }
   },
   items: [saleEnquiryItemSchema],
+  invoiceNumber: { type: String, required: true },
   freight: { type: Number, default: 0 },
   gstPercent: { type: Number, required: true, min: 0, max: 100 },
   status: { 

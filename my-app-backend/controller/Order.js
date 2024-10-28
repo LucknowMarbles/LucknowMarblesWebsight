@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const createOrder = async (req, res) => {
   try {
-    const { items, userInfo, subtotal, deliveryCharge, totalAmount } = req.body;
+    const { items, userInfo, subtotal, deliveryCharge, totalAmount, paymentMethod } = req.body;
     let userId = null;
 
     // Check if the user is authenticated
@@ -19,12 +19,23 @@ const createOrder = async (req, res) => {
     }
 
     const order = new Order({
-      user: userId,
-      items,
-      userInfo,
+      items: items.map(item => ({
+        _id: item._id,
+        price: item.price,
+        quantity: item.quantity,
+        name: item.name
+        })),
+      userInfo: {
+        _id: userInfo._id,
+        email: userInfo.email,
+        phoneNumber: userInfo.phoneNumber,
+        address: userInfo.address,
+      },
       subtotal,
       deliveryCharge,
-      totalAmount
+      totalAmount,
+      paymentMethod,
+      paymentStatus: 'pending'
     });
 
     await order.save();

@@ -1,57 +1,75 @@
 import React, { useState } from 'react';
+import { Upload, message } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
-const UploadExcel = ({ url, onSuccess }) => {
-  const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(null);
+const { Dragger } = Upload;
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-    setError(null);
-  };
+const UploadExcel = ({ url, onSuccess, form }) => {
+  const [fileList, setFileList] = useState([]);
 
-  const handleUpload = async () => {
-    if (!file) {
-      setError('Please select a file to upload');
-      return;
-    }
+  const props = {
+    name: 'file',
+    multiple: false,
+    fileList,
+    beforeUpload: (file) => {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.type === 'application/vnd.ms-excel';
+      if (!isExcel) {
+        message.error(`${file.name} is not an Excel file`);
+      }
+      return isExcel || Upload.LIST_IGNORE;
+    },
+    onChange(info) {
+      const { status } = info.file;
+      if (status !== 'uploading') {
+        console.log(info.file, info.fileList);
+      }
+      if (status === 'done') {
+        message.success(`${info.file.name} file uploaded successfully.`);
+        onSuccess();
+      } else if (status === 'error') {
+        message.error(`${info.file.name} file upload failed.`);
+      }
+      setFileList(info.fileList);
+    },
+    customRequest: async ({ file, onSuccess, onError }) => {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    setUploading(true);
-    setError(null);
-
-    try {
-      const token = localStorage.getItem('token'); // Assuming you're using token-based auth
-      const response = await axios.post(url, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}` // Include this if you're using token-based auth
+      // Append form data to the request
+      const formValues = form.getFieldsValue();
+      Object.keys(formValues).forEach(key => {
+        if (key === 'purchaseDate') {
+          formData.append(key, formValues[key].toISOString());
+        } else {
+          formData.append(key, formValues[key]);
         }
       });
-      console.log('API response:', response.data); // Log the response data
-      setUploading(false);
-      onSuccess(response.data);
-    } catch (error) {
-      setUploading(false);
-      setError('Error uploading file. Please try again.');
-      console.error('Error uploading file:', error);
-      if (error.response) {
-        console.error('Error response:', error.response.data);
+
+      try {
+        const response = await axios.post(url, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        onSuccess(response, file);
+      } catch (error) {
+        onError(error);
       }
-    }
+    },
   };
 
   return (
-    <div className="upload-excel">
-      <input type="file" onChange={handleFileChange} accept=".xlsx, .xls" />
-      <button onClick={handleUpload} disabled={uploading}>
-        {uploading ? 'Uploading...' : 'Upload'}
-      </button>
-      {error && <p className="error-message">{error}</p>}
-    </div>
+    <Dragger {...props}>
+      <p className="ant-upload-drag-icon">
+        <InboxOutlined />
+      </p>
+      <p className="ant-upload-text">Click or drag file to this area to upload</p>
+      <p className="ant-upload-hint">
+        Support for a single Excel file upload. Strictly prohibit from uploading company data or other
+        sensitive files.
+      </p>
+    </Dragger>
   );
 };
 

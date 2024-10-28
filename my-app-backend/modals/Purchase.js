@@ -10,6 +10,11 @@ const ecommerceProductSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 1
+  },
+  warehouse: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Warehouse',
+    required: true
   }
 });
 
@@ -25,8 +30,7 @@ const purchaseSchema = new mongoose.Schema({
   },
   billNumber: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   totalAmount: {
     type: Number,
@@ -34,7 +38,7 @@ const purchaseSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['Paid', 'Unpaid', 'Partial'],
+    enum: ['Paid', 'Pending', 'Partial'],
     default: 'Unpaid'
   },
   paymentMethod: {
@@ -45,10 +49,6 @@ const purchaseSchema = new mongoose.Schema({
   notes: {
     type: String
   },
-  pieces: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Piece'
-  }],
   transactions: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Transaction'
@@ -61,7 +61,7 @@ purchaseSchema.pre('save', async function(next) {
   const Product = mongoose.model('Product');
   for (let ecommerceProduct of this.ecommerceProducts) {
     const product = await Product.findById(ecommerceProduct.product);
-    if (!product || product.type !== 'ecommerce') {
+    if (!product || !product.isEcommerce) {
       return next(new Error('Only e-commerce products can be added to ecommerceProducts'));
     }
   }

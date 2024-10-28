@@ -7,7 +7,7 @@ const authMiddleware = require('../Middleware/auth');
 router.post('/', createOrder);
 
 // Other routes remain the same
-router.get('/', getAllOrders);
+router.get('/get-all-orders', getAllOrders);
 router.get('/:id', getOrderById);
 router.put('/:id',  updateOrder);
 router.delete('/:id',deleteOrder);

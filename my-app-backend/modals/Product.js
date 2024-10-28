@@ -9,6 +9,10 @@ const productSchema = new mongoose.Schema({
   category: { type: String, required: true },
   tags: [{ type: String }],
   isEcommerce: { type: Boolean, default: false },
+  warehouseQuantities: [{
+    warehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
+    quantity: { type: Number, required: true }
+  }]
 });
 
 productSchema.index({ location: '2dsphere' });

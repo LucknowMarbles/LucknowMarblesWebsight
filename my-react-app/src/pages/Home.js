@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../Home.css';
 import EnquiryForm from '../services/EnquiryForm';
-import EnquiryProductForm from '../components/EnquiryProductForm';
 
 const HomePage = ({ cart, setCart }) => {
   const [products, setProducts] = useState([]);
@@ -11,10 +10,9 @@ const HomePage = ({ cart, setCart }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showEcommerceOnly, setShowEcommerceOnly] = useState(false);
-  const [isProductSelectionVisible, setIsProductSelectionVisible] = useState(false);
-  const enquiryFormRef = useRef();
 
   useEffect(() => {
+
     const fetchProducts = async () => {
       try {
         const { data } = await axios.get('http://localhost:5001/api/products');
@@ -36,11 +34,6 @@ const HomePage = ({ cart, setCart }) => {
       }
       return [...prevSelected, { ...product, purposes: [] }];
     });
-    setIsProductSelectionVisible(true);
-  };
-
-  const handleProductsChange = (updatedProducts) => {
-    setSelectedProducts(updatedProducts);
   };
 
   const handleAddToCart = (product) => {
@@ -48,10 +41,16 @@ const HomePage = ({ cart, setCart }) => {
       const existingItem = prevCart.find(item => item._id === product._id);
       if (existingItem) {
         return prevCart.map(item =>
-          item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+          item._id === product._id ? { 
+            ...item,
+            quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      return [...prevCart, { 
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      quantity: 1 }];
     });
   };
 
@@ -107,19 +106,7 @@ const HomePage = ({ cart, setCart }) => {
           ))}
         </div>
       )}
-
-      {isProductSelectionVisible && (
-        <EnquiryProductForm 
-          onProductsChange={handleProductsChange}
-          initialProducts={selectedProducts}
-        />
-      )}
-
-      <EnquiryForm 
-        ref={enquiryFormRef}
-        selectedProducts={selectedProducts} 
-        setSelectedProducts={setSelectedProducts} 
-      />
+      <EnquiryForm selectedProducts={selectedProducts} setSelectedProducts={setSelectedProducts} />
     </div>
   );
 };

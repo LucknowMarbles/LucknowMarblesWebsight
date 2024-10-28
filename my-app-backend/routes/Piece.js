@@ -6,7 +6,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const { uploadPurchase, generateInvoice, DisplayPieces, getUniqueBatchesForProduct, getPiecesByBatch, getPieceById, getAllPurchases } = require('../controller/uploadPurchase');
 const adminMiddleware = require('../Middleware/admin');
 
-router.post('/upload-purchase', upload.single('file'), uploadPurchase);
+router.post('/upload-purchase', uploadPurchase);
 router.get('/generate-invoice/:purchaseId', generateInvoice);
 router.get('/unique-batches/:productId', getUniqueBatchesForProduct);
 router.get('/batch/:batchNo', getPiecesByBatch);

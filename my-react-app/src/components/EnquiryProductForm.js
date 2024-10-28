@@ -105,7 +105,7 @@ const EnquiryProductForm = ({ onProductsChange, initialProducts = [] }) => {
   };
 
   return (
-    <Form.List name="enquiryProducts">
+    <Form.List name="products">
       {(fields, { add, remove }) => (
         <>
           {enquiryItems.map((item, index) => (
@@ -178,5 +178,7 @@ const EnquiryProductForm = ({ onProductsChange, initialProducts = [] }) => {
     </Form.List>
   );
 };
+
+
 
 export default EnquiryProductForm;

@@ -6,6 +6,7 @@ import UploadExcel from '../components/UploadExcel';
 import CreateCustomerForm from '../components/CreateCustomerForm';
 import AddressForm from '../components/AddressForm';
 import EcommerceProductForm from '../components/EcommerceForm';
+import EnquiryProductForm from '../components/EnquiryProductForm'; // Add this import
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -313,6 +314,10 @@ function UploadSaleTab() {
     }));
   };
 
+  const handleProductsChange = (updatedProducts) => {
+    setSaleItems(updatedProducts);
+  };
+
   const columns = [
     {
       title: 'Piece ID',
@@ -346,14 +351,6 @@ function UploadSaleTab() {
   return (
     <div className="upload-sale-section">
       <h2>Upload Sale Data</h2>
-      <Select value={saleEntryMethod} onChange={(value) => setSaleEntryMethod(value)} style={{ width: 200, marginBottom: 20 }}>
-        <Option value="excel">Excel Upload</Option>
-        <Option value="manual">Manual Entry</Option>
-      </Select>
-
-      {saleEntryMethod === 'excel' ? (
-        <UploadExcel uploadType="sale" />
-      ) : (
         <Form layout="vertical">
           <CreateCustomerForm onCustomerCreated={handleCustomerCreated} />
 
@@ -403,6 +400,14 @@ function UploadSaleTab() {
           <h3>E-commerce Products</h3>
           <EcommerceProductForm />
 
+          <h3>Non E-commerce Products</h3>
+          {/*
+          <EnquiryProductForm 
+            onProductsChange={handleProductsChange}
+            initialProducts={saleItems}
+          />
+          */}
+
           {saleItems.map((item, index) => (
             <div key={index}>
               <Space style={{ display: 'flex', marginBottom: 8 }} align="baseline">
@@ -428,6 +433,7 @@ function UploadSaleTab() {
                     />
                   </Form.Item>
                 ) : (
+                     
                   <>
                     <Form.Item label="Batch">
                       <Select
@@ -442,7 +448,7 @@ function UploadSaleTab() {
                         ))}
                       </Select>
                     </Form.Item>
-
+ 
                     {selectedBatch && (
                       <Form.Item label="Select Pieces">
                         {availablePieces.map(piece => (
@@ -456,9 +462,10 @@ function UploadSaleTab() {
                         ))}
                       </Form.Item>
                     )}
+                      
                   </>
                 )}
-
+      
                 <MinusCircleOutlined onClick={() => handleRemoveProduct(index)} />
               </Space>
 
@@ -477,12 +484,14 @@ function UploadSaleTab() {
             <Button type="dashed" onClick={handleAddProduct} block icon={<PlusOutlined />}>
               Add Product
             </Button>
+            
           </Form.Item>
-
+          
           <Button onClick={handleManualSaleSubmit} type="primary" style={{ marginLeft: 10 }}>Submit Sale Data</Button>
         </Form>
-      )}
+  
     </div>
+  
   );
 }
 

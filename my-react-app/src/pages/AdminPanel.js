@@ -7,7 +7,6 @@ import UsersTab from '../adminTabs/UsersTab';
 import ProductsTab from '../adminTabs/ProductsTab';
 import OrdersTab from '../adminTabs/OrdersTab';
 import EnquiriesTab from '../adminTabs/EnquiriesTab';
-import UploadPurchaseTab from '../adminTabs/UploadPurchaseTab';
 import UploadSaleTab from '../adminTabs/UploadSaleTab';
 import SaleTab from '../adminTabs/SaleTab';
 import GenerateInvoiceTab from '../adminTabs/GenerateInvoiceTab';
@@ -17,6 +16,9 @@ import { FaBars, FaTimes } from 'react-icons/fa';
 import CreateWarehouse from '../adminTabs/WarehouswTab';
 import TransactionReportTab from '../adminTabs/TransactionReportTab';
 import CreateTransactionTab from '../adminTabs/CreateTransactionTab';
+import TransferTab from '../adminTabs/TransferTab';
+import PurchaseForm from '../components/PurchaseForm';
+
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyCsNh45zRUdhDiJTYblG4vw5gAtWlbTf_4";
 
@@ -64,6 +66,7 @@ function AdminPanel() {
   }
 
   const tabs = [
+    { id: 'transfer', label: 'Transfer' },
     { id: 'pieces', label: 'Pieces Balance' },
     { id: 'users', label: 'Users' },
     { id: 'products', label: 'Products' },
@@ -108,12 +111,13 @@ function AdminPanel() {
           </nav>
         </div>
         <main className="admin-content">
+          {activeTab === 'transfer' && <TransferTab />}
           {activeTab === 'pieces' && <PiecesTab />}
           {activeTab === 'users' && <UsersTab />}
           {activeTab === 'products' && <ProductsTab />}
           {activeTab === 'orders' && <OrdersTab />}
           {activeTab === 'enquiries' && <EnquiriesTab />}
-          {activeTab === 'uploadPurchase' && <UploadPurchaseTab />}
+          {activeTab === 'uploadPurchase' && <PurchaseForm />}
           {activeTab === 'uploadSale' && <UploadSaleTab />}
           {activeTab === 'generateInvoice' && <GenerateInvoiceTab />}
           {activeTab === 'calendar' && <CalendarTab />}

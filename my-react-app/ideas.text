@@ -1,0 +1,13 @@
+convert enquiry and cartSale to sale entry and bill entry
+Display purchase entry in purchase page to admin
+Display Ecommerce product sale in sale page to admin
+Display Ecommerce product stock in stock page to admin
+User Purmitions access to edit and deleat sale entry and bill entry
+Give option of selecting warehouse before selecting lot in enquiry
+Check if product is out of stock when adding to cart
+Create a page for sale and profits analysis for admin
+Create a page for warehouse wise stock analysis for admin
+Create a page for product wise sale analysis for admin
+Improve UI/UX of the websight
+Use SEO best practices
+Upload Producs Bulk entry using excel file
