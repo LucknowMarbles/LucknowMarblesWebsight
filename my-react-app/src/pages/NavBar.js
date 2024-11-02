@@ -9,6 +9,7 @@ const Navbar = ({ cart }) => {
         <li className="navbar-item">
           <Link to="/orders" className="navbar-link">Check Order History</Link>
         </li>
+
         <li className="navbar-item">
           <Link to="/" className="navbar-link">Home</Link>
         </li>
@@ -31,6 +32,9 @@ const Navbar = ({ cart }) => {
           <Link to="/cart" className="navbar-link">
             🛒 Cart ({cart.length})
           </Link>
+        </li>
+        <li className="navbar-item">
+          <Link to="/warehouses" className="navbar-link">Warehouses</Link>
         </li>
       </ul>
     </nav>

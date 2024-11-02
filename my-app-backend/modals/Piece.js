@@ -19,7 +19,8 @@ const pieceSchema = new mongoose.Schema({
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
   isSold: { type: Boolean, default: false },
   currentWarehouse: { type: mongoose.Schema.Types.ObjectId, ref: 'Warehouse' },
-  locationHistory: [locationHistorySchema]
+  locationHistory: [locationHistorySchema],
+  soldArea: { type: Number, default: 0 },
 }, { timestamps: true });
 
 const Piece = mongoose.model('Piece', pieceSchema);

@@ -1,167 +1,190 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Form, Input, InputNumber, Upload, Select, Switch, Button, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
+import AIContentGenerator from '../components/AIContentGenerator';
+
+const { TextArea } = Input;
+const { Option } = Select;
 
 function ProductsTab() {
-  const [product, setProduct] = useState({
-    name: '',
-    description: '',
-    price: '',
-    quantity: '',
-    imageUrl: '',
-    category: '',
-    tags: '',
-    isEcommerce: false,
-    longitude: '',
-    latitude: '',
-  });
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setProduct(prevProduct => ({
-      ...prevProduct,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const handleAIContent = (contentType, content) => {
+    switch (contentType) {
+      case 'description':
+        form.setFieldsValue({ description: content });
+        break;
+      case 'seo':
+        try {
+          const seoContent = content.split('\n');
+          const metaTitle = seoContent.find(line => line.startsWith('Meta title:'))?.replace('Meta title:', '').trim();
+          const metaDescription = seoContent.find(line => line.startsWith('Meta description:'))?.replace('Meta description:', '').trim();
+          const keywords = seoContent.find(line => line.startsWith('Focus keywords:'))?.replace('Focus keywords:', '').trim();
+          
+          form.setFieldsValue({
+            metaTitle,
+            metaDescription,
+            tags: keywords
+          });
+        } catch (error) {
+          console.error('Error parsing SEO content:', error);
+          message.error('Failed to parse SEO content');
+        }
+        break;
+      case 'features':
+        form.setFieldsValue({ features: content });
+        break;
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (values) => {
+    setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5001/api/products', product, {
+      await axios.post('http://localhost:5001/api/products', values, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert('Product added successfully');
-      setProduct({
-        name: '',
-        description: '',
-        price: '',
-        quantity: '',
-        imageUrl: '',
-        category: '',
-        tags: '',
-        isEcommerce: false,
-        longitude: '',
-        latitude: '',
-      });
+      message.success('Product added successfully');
+      form.resetFields();
     } catch (error) {
       console.error('Error adding product:', error);
-      alert('Failed to add product');
+      message.error('Failed to add product');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="products-section">
-      <h2>Add New Product</h2>
-      <form onSubmit={handleSubmit} className="admin-form">
-        <div className="form-group">
-          <label htmlFor="name">Product Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={product.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="description">Description</label>
-          <textarea
-            id="description"
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="price">Price</label>
-          <input
-            type="number"
-            id="price"
-            name="price"
-            value={product.price}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="quantity">Quantity</label>
-          <input
-            type="number"
-            id="quantity"
-            name="quantity"
-            value={product.quantity}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="imageUrl">Product Image URL</label>
-          <input
-            type="url"
-            id="imageUrl"
-            name="imageUrl"
-            value={product.imageUrl}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="category">Category</label>
-          <input
-            type="text"
-            id="category"
-            name="category"
-            value={product.category}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="tags">Tags (comma-separated)</label>
-          <input
-            type="text"
-            id="tags"
-            name="tags"
-            value={product.tags}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="isEcommerce">
-            <input
-              type="checkbox"
-              id="isEcommerce"
-              name="isEcommerce"
-              checked={product.isEcommerce}
-              onChange={handleChange}
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Add New Product</h2>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="max-w-4xl"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Form.Item
+              name="name"
+              label="Product Name"
+              rules={[{ required: true, message: 'Please enter product name' }]}
+            >
+              <Input />
+            </Form.Item>
+
+            <Form.Item
+              name="description"
+              label="Description"
+              rules={[{ required: true, message: 'Please enter description' }]}
+            >
+              <TextArea rows={4} />
+            </Form.Item>
+
+            <AIContentGenerator
+              onContentGenerated={handleAIContent}
+              productData={form.getFieldsValue()}
             />
-            E-commerce Product
-          </label>
+
+            <Form.Item
+              name="price"
+              label="Price"
+              rules={[{ required: true, message: 'Please enter price' }]}
+            >
+              <InputNumber
+                className="w-full"
+                formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={value => value.replace(/₹\s?|(,*)/g, '')}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="quantity"
+              label="Quantity"
+              rules={[{ required: true, message: 'Please enter quantity' }]}
+            >
+              <InputNumber className="w-full" min={0} />
+            </Form.Item>
+          </div>
+
+          <div>
+            <Form.Item
+              name="imageUrl"
+              label="Product Image"
+              rules={[{ required: true, message: 'Please upload an image' }]}
+            >
+              <Upload
+                name="image"
+                listType="picture"
+                maxCount={1}
+                action="http://localhost:5001/api/upload"
+                headers={{ Authorization: `Bearer ${localStorage.getItem('token')}` }}
+              >
+                <Button icon={<UploadOutlined />}>Upload Image</Button>
+              </Upload>
+            </Form.Item>
+
+            <Form.Item
+              name="category"
+              label="Category"
+              rules={[{ required: true, message: 'Please select category' }]}
+            >
+              <Select>
+                <Option value="furniture">Furniture</Option>
+                <Option value="electronics">Electronics</Option>
+                <Option value="clothing">Clothing</Option>
+                {/* Add more categories as needed */}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="tags"
+              label="Tags"
+            >
+              <Select mode="tags" placeholder="Enter tags">
+                <Option value="new">New</Option>
+                <Option value="featured">Featured</Option>
+                <Option value="sale">Sale</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="isEcommerce"
+              label="E-commerce Product"
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
+
+            <Form.Item
+              name="metaTitle"
+              label="Meta Title"
+            >
+              <Input />
+            </Form.Item>
+
+            <Form.Item
+              name="metaDescription"
+              label="Meta Description"
+            >
+              <TextArea rows={2} />
+            </Form.Item>
+          </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="longitude">Longitude</label>
-          <input
-            type="text"
-            id="longitude"
-            name="longitude"
-            value={product.longitude}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="latitude">Latitude</label>
-          <input
-            type="text"
-            id="latitude"
-            name="latitude"
-            value={product.latitude}
-            onChange={handleChange}
-          />
-        </div>
-        <button type="submit">Add Product</button>
-      </form>
+
+        <Form.Item>
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            loading={loading}
+            className="w-full md:w-auto"
+          >
+            Add Product
+          </Button>
+        </Form.Item>
+      </Form>
     </div>
   );
 }

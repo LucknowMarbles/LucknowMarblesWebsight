@@ -66,8 +66,15 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
 
     setIsLoading(true);
     try {
-      console.log(1);
       let response;
+      
+      // Prevent default form submission
+      const handleSubmit = async (e) => {
+        if (e) {
+          e.preventDefault();
+        }
+      };
+
       if (isExistingCustomer) {
         response = await axios.put(`http://localhost:5001/api/users/${values.customerId}`, values);
         message.success('Customer information updated successfully');
@@ -75,7 +82,14 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
         response = await axios.post('http://localhost:5001/api/users/create-customer', values);
         message.success('New customer created successfully');
       }
-      form.resetFields();
+
+      // Call the callback with the response data
+      if (onCustomerCreated) {
+        onCustomerCreated({
+          ...response.data,
+          customerId: response.data._id
+        });
+      }
 
       setShowNewCustomerForm(false);
       setIsPhoneVerified(false);
@@ -93,6 +107,7 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
       layout="vertical" 
       onFinish={onFinish}
       id="create-customer-form"
+      onSubmit={(e) => e.preventDefault()}
     >
       <Form.Item
         name="phoneNumber"
@@ -131,7 +146,14 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
             <Input />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={isLoading}>
+            <Button 
+              type="primary" 
+              onClick={(e) => {
+                e.preventDefault();
+                form.submit();
+              }}
+              loading={isLoading}
+            >
               Update Customer
             </Button>
           </Form.Item>
@@ -169,7 +191,14 @@ const CreateCustomerForm = ({ onCustomerCreated, initialPhoneNumber = '' }) => {
             </Select>
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={isLoading}>
+            <Button 
+              type="primary" 
+              onClick={(e) => {
+                e.preventDefault();
+                form.submit();
+              }}
+              loading={isLoading}
+            >
               Create Customer
             </Button>
           </Form.Item>

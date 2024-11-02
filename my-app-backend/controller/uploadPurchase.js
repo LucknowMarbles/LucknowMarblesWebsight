@@ -3,6 +3,7 @@ const multer = require('multer');
 const Piece = require('../modals/Piece');
 const Purchase = require('../modals/Purchase');
 const Product = require('../modals/Product');
+const PDFDocument = require('pdfkit');
 
 const mongoose = require('mongoose');
 const router = express.Router();
@@ -70,34 +71,131 @@ const uploadPurchase = async (req, res) => {
 const generateInvoice = async (req, res) => {
   try {
     const { purchaseId } = req.params;
-    const pieces = await Piece.find({ purchaseId });
+    
+    // Fetch purchase with populated fields
+    const purchase = await Purchase.findById(purchaseId)
+      .populate('ecommerceProducts.product', 'name')
+      .populate('ecommerceProducts.warehouse', 'name');
 
-    const doc = new PDFDocument();
+    const pieces = await Piece.find({ purchaseId })
+      .populate('productId', 'name')
+      .populate('currentWarehouse', 'name')
+      .sort({ batchNo: 1, pieceNo: 1 });
+
+    if (!purchase || !pieces) {
+      return res.status(404).json({ message: 'Purchase or pieces not found' });
+    }
+
+    // Create PDF document
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=purchase-${purchase.billNumber}.pdf`);
 
+    // Pipe PDF to response
     doc.pipe(res);
 
-    doc.fontSize(20).text('Invoice', { align: 'center' });
+    // Add header
+    doc.fontSize(20).text('Purchase Invoice', { align: 'center' });
     doc.moveDown();
 
-    pieces.forEach(piece => {
-      doc.fontSize(12).text(`Piece No: ${piece.pieceNo}`);
-      doc.text(`Customer Length: ${piece.customerLength}`);
-      doc.text(`Customer Width: ${piece.customerWidth}`);
-      doc.text(`Trader Length: ${piece.traderLength}`);
-      doc.text(`Trader Width: ${piece.traderWidth}`);
-      doc.text(`Thickness: ${piece.thickness}`);
-      doc.text(`Is Defective: ${piece.isDefective ? 'Yes' : 'No'}`);
-      doc.text(`Batch No: ${piece.batchNo}`);
-      doc.text(`Purchase Bill No: ${piece.purchaseBillNo}`);
-      doc.moveDown();
-    });
+    // Add purchase details
+    doc.fontSize(12)
+      .text(`Bill Number: ${purchase.billNumber}`)
+      .text(`Supplier: ${purchase.supplier}`)
+      .text(`Purchase Date: ${new Date(purchase.purchaseDate).toLocaleDateString()}`)
+      .text(`Payment Status: ${purchase.paymentStatus}`)
+      .text(`Payment Method: ${purchase.paymentMethod}`)
+      .text(`Total Amount: ₹${purchase.totalAmount.toFixed(2)}`)
+      .moveDown();
 
+    // Add enquiry products table
+    if (pieces.length > 0) {
+      doc.fontSize(14).text('Enquiry Products', { underline: true });
+      doc.moveDown();
+
+      // Group pieces by batch
+      const batchGroups = pieces.reduce((groups, piece) => {
+        const batch = piece.batchNo;
+        if (!groups[batch]) {
+          groups[batch] = [];
+        }
+        groups[batch].push(piece);
+        return groups;
+      }, {});
+
+      Object.entries(batchGroups).forEach(([batchNo, batchPieces]) => {
+        doc.fontSize(12).text(`Batch: ${batchNo}`);
+        doc.moveDown();
+
+        // Add table headers
+        doc.fontSize(10)
+          .text('Piece No', 50, doc.y, { width: 80 })
+          .text('Product', 130, doc.y - 12, { width: 100 })
+          .text('Dimensions', 230, doc.y - 12, { width: 120 })
+          .text('Thickness', 350, doc.y - 12, { width: 70 })
+          .text('Warehouse', 420, doc.y - 12, { width: 100 });
+        doc.moveDown();
+
+        // Add pieces
+        batchPieces.forEach(piece => {
+          const y = doc.y;
+          doc.fontSize(10)
+            .text(piece.pieceNo, 50, y)
+            .text(piece.productId.name, 130, y)
+            .text(`${piece.customerLength}×${piece.customerWidth}`, 230, y)
+            .text(piece.thickness.toString(), 350, y)
+            .text(piece.currentWarehouse.name, 420, y);
+          doc.moveDown();
+        });
+
+        doc.moveDown();
+      });
+    }
+
+    // Add e-commerce products table
+    if (purchase.ecommerceProducts?.length > 0) {
+      doc.addPage();
+      doc.fontSize(14).text('E-commerce Products', { underline: true });
+      doc.moveDown();
+
+      // Add table headers
+      doc.fontSize(10)
+        .text('Product', 50, doc.y, { width: 200 })
+        .text('Quantity', 250, doc.y - 12, { width: 100 })
+        .text('Warehouse', 350, doc.y - 12, { width: 150 });
+      doc.moveDown();
+
+      // Add products
+      purchase.ecommerceProducts.forEach(product => {
+        const y = doc.y;
+        doc.fontSize(10)
+          .text(product.product.name, 50, y)
+          .text(product.quantity.toString(), 250, y)
+          .text(product.warehouse.name, 350, y);
+        doc.moveDown();
+      });
+    }
+
+    // Add notes if any
+    if (purchase.notes) {
+      doc.moveDown()
+        .fontSize(12)
+        .text('Notes:', { underline: true })
+        .fontSize(10)
+        .text(purchase.notes);
+    }
+
+    // Finalize PDF
     doc.end();
+
   } catch (error) {
     console.error('Error generating invoice:', error);
-    res.status(500).json({ message: 'Error generating invoice' });
+    res.status(500).json({ 
+      message: 'Error generating invoice',
+      error: error.message 
+    });
   }
 };
 
@@ -223,7 +321,70 @@ const getAllPurchases = async (req, res) => {
   }
 };
 
+const getIncompleteSales = async (req, res) => {
+  try {
+    // Find all pieces that have been partially sold
+    const incompleteSales = await Piece.find({
+      $and: [
+        { soldArea: { $gt: 0 } },  // Has some sold area
+        {
+          $expr: {
+            $lt: ["$soldArea", { $multiply: ["$customerLength", "$customerWidth"] }]
+          }
+        }
+      ]
+    }).select('pieceNo customerLength customerWidth soldArea');
+
+    // Calculate areas and format response
+    const formattedSales = incompleteSales.map(piece => {
+      const totalArea = piece.customerLength * piece.customerWidth;
+      return {
+        pieceNo: piece.pieceNo,
+        totalArea: totalArea.toFixed(2),
+        soldArea: piece.soldArea.toFixed(2),
+        remainingArea: (totalArea - piece.soldArea).toFixed(2)
+      };
+    });
+
+    return res.status(200).json(formattedSales);
+
+  } catch (error) {
+    console.error('Error fetching incomplete sales:', error);
+    return res.status(500).json({ 
+      message: 'Error fetching incomplete sales data',
+      error: error.message 
+    });
+  }
+}; 
+
+// Add this function to get pieces by purchase ID
+const getPiecesByPurchaseId = async (req, res) => {
+  try {
+    const { purchaseId } = req.params;
+    
+    const pieces = await Piece.find({ purchaseId })
+      .populate('currentWarehouse', 'name')
+      .populate('productId', 'name')
+      .sort({ batchNo: 1, pieceNo: 1 });
+
+    if (!pieces) {
+      return res.status(404).json({ 
+        message: 'No pieces found for this purchase' 
+      });
+    }
+
+    res.status(200).json(pieces);
+  } catch (error) {
+    console.error('Error fetching pieces:', error);
+    res.status(500).json({ 
+      message: 'Error fetching pieces',
+      error: error.message 
+    });
+  }
+};
+
 module.exports = { 
+  getPiecesByPurchaseId,
   uploadPurchase, 
   generateInvoice, 
   DisplayPieces, 
@@ -232,5 +393,6 @@ module.exports = {
   getPieceById,
   createChalan,
   updatePieceLocation,
-  getAllPurchases
+  getAllPurchases,
+  getIncompleteSales
 };

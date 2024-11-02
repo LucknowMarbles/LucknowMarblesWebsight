@@ -73,12 +73,133 @@ const getAllEnquiries = async (req, res) => {
   try {
     const enquiries = await Enquiry.find()
       .populate('customer', 'username email phoneNumber')
-      .populate('products.product', 'name');
-    res.json(enquiries);
+      .populate({
+        path: 'products',
+        populate: [
+          {
+            path: 'product',
+            select: 'name price isEcommerce'
+          },
+          {
+            path: 'pieces',
+            select: 'pieceNo customerLength customerWidth traderLength traderWidth thickness isDefective currentWarehouse'
+          }
+        ]
+      })
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    console.log(enquiries);
+    res.status(200).json({
+      success: true,
+      data: enquiries
+    });
   } catch (error) {
     console.error('Error fetching enquiries:', error);
-    res.status(500).json({ message: 'Failed to fetch enquiries', error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch enquiries', 
+      error: error.message 
+    });
   }
 };
 
-module.exports = { createEnquiry, getAllEnquiries };
+const getEnquiryById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate if the provided ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid enquiry ID format' 
+      });
+    }
+
+    // Find the enquiry and populate all necessary fields
+    console.log(id);
+    const enquiry = await Enquiry.findById(id)
+      .populate('customer', 'username email phoneNumber')
+      .populate({
+        path: 'products',
+        populate: [
+          {
+            path: 'product',
+            select: 'name price isEcommerce'
+          },
+          {
+            path: 'pieces',
+            select: 'pieceNo customerLength customerWidth traderLength traderWidth thickness isDefective currentWarehouse'
+          }
+        ]
+      });
+
+    if (!enquiry) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Enquiry not found' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: enquiry
+    });
+  } catch (error) {
+    console.error('Error fetching enquiry by ID:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch enquiry', 
+      error: error.message 
+    });
+  }
+};
+
+// Optional: Get enquiries by customer ID
+const getEnquiriesByCustomer = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(customerId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid customer ID format' 
+      });
+    }
+
+    const enquiries = await Enquiry.find({ customer: customerId })
+      .populate('customer', 'username email phoneNumber')
+      .populate({
+        path: 'products',
+        populate: [
+          {
+            path: 'product',
+            select: 'name price isEcommerce'
+          },
+          {
+            path: 'pieces',
+            select: 'pieceNo customerLength customerWidth traderLength traderWidth thickness isDefective currentWarehouse'
+          }
+        ]
+      })
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    res.status(200).json({
+      success: true,
+      data: enquiries
+    });
+  } catch (error) {
+    console.error('Error fetching enquiries by customer:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch enquiries', 
+      error: error.message 
+    });
+  }
+};
+
+module.exports = { 
+  createEnquiry, 
+  getAllEnquiries, 
+  getEnquiryById,
+  getEnquiriesByCustomer 
+};

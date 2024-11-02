@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Table, Tag, Space, Button, Modal, Descriptions } from 'antd';
+import { Table, Tag, Space, Button, Modal, Descriptions, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 
 function SaleTab() {
   const [sales, setSales] = useState([]);
@@ -89,6 +90,26 @@ function SaleTab() {
     setModalVisible(true);
   };
 
+  const handleGenerateInvoice = async (saleId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5001/api/sale/generate-invoice/${saleId}`,
+        { responseType: 'blob' }
+      );
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${selectedSale.invoiceNumber}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      message.error('Failed to generate invoice');
+    }
+  };
+
   return (
     <div>
       <h2>Sales</h2>
@@ -142,6 +163,13 @@ function SaleTab() {
               rowKey={(record) => record._id}
               pagination={false}
             />
+            <Button 
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={() => handleGenerateInvoice(selectedSale._id)}
+            >
+              Generate Invoice
+            </Button>
           </div>
         )}
       </Modal>

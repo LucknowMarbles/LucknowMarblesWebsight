@@ -9,8 +9,7 @@ import OrdersTab from '../adminTabs/OrdersTab';
 import EnquiriesTab from '../adminTabs/EnquiriesTab';
 import UploadSaleTab from '../adminTabs/UploadSaleTab';
 import SaleTab from '../adminTabs/SaleTab';
-import GenerateInvoiceTab from '../adminTabs/GenerateInvoiceTab';
-import CalendarTab from '../adminTabs/UploadSaleTab';
+import CalendarTab from '../adminTabs/CalendarTab';
 import { LoadScript } from '@react-google-maps/api';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import CreateWarehouse from '../adminTabs/WarehouswTab';
@@ -18,6 +17,10 @@ import TransactionReportTab from '../adminTabs/TransactionReportTab';
 import CreateTransactionTab from '../adminTabs/CreateTransactionTab';
 import TransferTab from '../adminTabs/TransferTab';
 import PurchaseForm from '../components/PurchaseForm';
+import TasksPage from '../adminTabs/TasksPage';
+import CreateTaskPage from '../adminTabs/CreateTaskPage';
+import DisplayPurchases from '../adminTabs/DisplayPurchases';
+import WarehouseModelUpload from '../components/WarehouseModelUpload';
 
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyCsNh45zRUdhDiJTYblG4vw5gAtWlbTf_4";
@@ -66,6 +69,7 @@ function AdminPanel() {
   }
 
   const tabs = [
+    { id: 'warehouseModelUpload', label: 'Upload Warehouse Model' },
     { id: 'transfer', label: 'Transfer' },
     { id: 'pieces', label: 'Pieces Balance' },
     { id: 'users', label: 'Users' },
@@ -74,12 +78,14 @@ function AdminPanel() {
     { id: 'enquiries', label: 'Enquiries' },
     { id: 'uploadPurchase', label: 'Upload Purchase' },
     { id: 'uploadSale', label: 'Upload Sale' },
-    { id: 'generateInvoice', label: 'Generate Invoice' },
     { id: 'calendar', label: 'Calendar' },
     { id: 'saleData', label: 'Sales' },
     {id: 'warehouse', label: 'CreateWarehouse'},
     { id: 'createTransaction', label: 'Create Transaction' },
     { id: 'transactionReport', label: 'Transaction Report' },
+    { id: 'tasks', label: 'Tasks' },
+    { id: 'createTask', label: 'Create Task' },
+    { id: 'displayPurchases', label: 'Display Purchases' },
   ];
 
   const toggleSidebar = () => {
@@ -119,12 +125,15 @@ function AdminPanel() {
           {activeTab === 'enquiries' && <EnquiriesTab />}
           {activeTab === 'uploadPurchase' && <PurchaseForm />}
           {activeTab === 'uploadSale' && <UploadSaleTab />}
-          {activeTab === 'generateInvoice' && <GenerateInvoiceTab />}
           {activeTab === 'calendar' && <CalendarTab />}
           {activeTab === 'saleData'&& <SaleTab />}
           {activeTab === 'warehouse' && <CreateWarehouse />}
           {activeTab === 'createTransaction' && <CreateTransactionTab />}
           {activeTab === 'transactionReport' && <TransactionReportTab />}
+          {activeTab === 'tasks' && <TasksPage />}
+          {activeTab === 'createTask' && <CreateTaskPage />}
+          {activeTab === 'displayPurchases' && <DisplayPurchases />}
+          {activeTab === 'warehouseModelUpload' && <WarehouseModelUpload />}
         </main>
     </div>
   );

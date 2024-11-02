@@ -10,7 +10,6 @@ const saleEnquiryItemSchema = new mongoose.Schema({
 });
 
 const saleEnquirySchema = new mongoose.Schema({
-  items: [saleEnquiryItemSchema],
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
   shippingAddress: {
     street: { type: String, required: true },

@@ -1,0 +1,51 @@
+[{
+  "_id": {
+    "$oid": "6724cc4e8182ea81bab56a75"
+  },
+  "username": "pranat",
+  "email": "pranat@lucknowmarbles.com",
+  "phoneNumber": "8009720503",
+  "type": "customer",
+  "createdAt": {
+    "$date": "2024-11-01T12:40:46.118Z"
+  },
+  "__v": 0
+}]
+
+
+[
+    {
+  "customer": ObjectId(""),
+  "password": "Pranat123!",
+  "isAdmin": true,
+  "permissions": {
+    "viewProducts": true,
+    "placeOrder": true,
+    "submitEnquiry": true,
+    "viewUsers": true,
+    "editUsers": true,
+    "deleteUsers": true,
+    "changeUserRoles": true,
+    "addProducts": true,
+    "editProducts": true,
+    "deleteProducts": true,
+    "manageCategories": true,
+    "viewOrders": true,
+    "updateOrderStatus": true,
+    "cancelOrders": true,
+    "refundOrders": true,
+    "viewEnquiries": true,
+    "respondToEnquiries": true,
+    "deleteEnquiries": true,
+    "editWebsiteContent": true,
+    "manageBlogPosts": true,
+    "viewSalesReports": true,
+    "viewUserAnalytics": true,
+    "exportData": true,
+    "managePaymentGateways": true,
+    "manageShippingOptions": true,
+    "setSystemPreferences": true,
+    "viewSecurityLogs": true,
+    "manageUserPermissions": true
+  }
+}]

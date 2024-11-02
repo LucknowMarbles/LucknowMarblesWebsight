@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Form, Select, Checkbox, InputNumber, Button, Table } from 'antd';
+import { Form, Select, Checkbox, InputNumber, Button, Table, Space } from 'antd';
 
 const { Option } = Select;
 
@@ -12,9 +12,13 @@ const ProductSelectionForm = ({ onProductsSelected, transferType }) => {
   const [pieces, setPieces] = useState([]);
   const [selectedPieces, setSelectedPieces] = useState([]);
   const [quantity, setQuantity] = useState(1);
+  const [warehouses, setWarehouses] = useState([]);
+  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
+    fetchWarehouses();
   }, []);
 
   const fetchProducts = async () => {
@@ -37,10 +41,29 @@ const ProductSelectionForm = ({ onProductsSelected, transferType }) => {
 
   const fetchPieces = async (batchNo) => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/pieces/batch/${batchNo}`);
+      setLoading(true);
+      const params = new URLSearchParams({
+        batchNo,
+        ...(selectedWarehouse && { warehouseId: selectedWarehouse })
+      });
+      
+      const response = await axios.get(
+        `http://localhost:5001/api/pieces/batch/${batchNo}?${params}`
+      );
       setPieces(response.data.data);
     } catch (error) {
       console.error('Error fetching pieces:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchWarehouses = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/warehouses');
+      setWarehouses(response.data);
+    } catch (error) {
+      console.error('Error fetching warehouses:', error);
     }
   };
 
@@ -86,12 +109,20 @@ const ProductSelectionForm = ({ onProductsSelected, transferType }) => {
     }
   };
 
+  const handleWarehouseChange = (value) => {
+    setSelectedWarehouse(value);
+    if (selectedBatch) {
+      fetchPieces(selectedBatch);
+    }
+  };
+
   const handleSubmit = () => {
     onProductsSelected({
       product: selectedProduct,
       batch: selectedProduct.isEcommerce ? null : selectedBatch,
       pieces: selectedPieces,
-      quantity: quantity
+      quantity: quantity,
+      warehouse: selectedWarehouse
     });
   };
 
@@ -119,66 +150,102 @@ const ProductSelectionForm = ({ onProductsSelected, transferType }) => {
       key: 'isDefective',
       render: (isDefective) => isDefective ? 'Yes' : 'No'
     },
+    {
+      title: 'Warehouse',
+      dataIndex: ['currentWarehouse', 'name'],
+      key: 'warehouse',
+    }
   ];
 
   return (
     <Form layout="vertical">
-      <Form.Item label="Select Product">
-        <Select value={selectedProduct?._id} onChange={handleProductChange}>
-          {products.map(product => (
-            <Option key={product._id} value={product._id}>{product.name}</Option>
-          ))}
-        </Select>
-      </Form.Item>
-
-      {selectedProduct && !selectedProduct.isEcommerce && (
-        <Form.Item label="Select Batch">
-          <Select value={selectedBatch} onChange={handleBatchChange}>
-            {batches.map(batch => (
-              <Option key={batch} value={batch}>{batch}</Option>
+      <Space direction="vertical" className="w-full">
+        <Form.Item label="Select Product">
+          <Select 
+            value={selectedProduct?._id} 
+            onChange={handleProductChange}
+            placeholder="Select a product"
+          >
+            {products.map(product => (
+              <Option key={product._id} value={product._id}>{product.name}</Option>
             ))}
           </Select>
         </Form.Item>
-      )}
 
-      {selectedProduct && (
-        <>
-          {selectedProduct.isEcommerce ? (
-            <Form.Item label="Quantity">
-              <InputNumber
-                value={quantity}
-                onChange={(value) => setQuantity(value)}
-                min={1}
-              />
-            </Form.Item>
-          ) : selectedBatch && (
-            <>
-              <Form.Item label="Select Pieces">
-                <Table
-                  dataSource={pieces}
-                  columns={columns}
-                  rowKey="_id"
-                  pagination={false}
-                  scroll={{ y: 240 }}
+        <Form.Item label="Select Warehouse">
+          <Select
+            value={selectedWarehouse}
+            onChange={handleWarehouseChange}
+            placeholder="Select a warehouse"
+          >
+            {warehouses.map(warehouse => (
+              <Option key={warehouse._id} value={warehouse._id}>
+                {warehouse.name}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        {selectedProduct && !selectedProduct.isEcommerce && (
+          <Form.Item label="Select Batch">
+            <Select 
+              value={selectedBatch} 
+              onChange={handleBatchChange}
+              placeholder="Select a batch"
+              disabled={!selectedWarehouse}
+            >
+              {batches.map(batch => (
+                <Option key={batch} value={batch}>{batch}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+
+        {selectedProduct && (
+          <>
+            {selectedProduct.isEcommerce ? (
+              <Form.Item label="Quantity">
+                <InputNumber
+                  value={quantity}
+                  onChange={(value) => setQuantity(value)}
+                  min={1}
+                  disabled={!selectedWarehouse}
                 />
               </Form.Item>
-              <Form.Item label="Calculated Quantity">
-                <InputNumber value={quantity} disabled />
-              </Form.Item>
-            </>
-          )}
+            ) : selectedBatch && (
+              <>
+                <Form.Item label="Select Pieces">
+                  <Table
+                    dataSource={pieces}
+                    columns={columns}
+                    rowKey="_id"
+                    pagination={false}
+                    scroll={{ y: 240 }}
+                    loading={loading}
+                  />
+                </Form.Item>
+                <Form.Item label="Calculated Quantity">
+                  <InputNumber value={quantity} disabled />
+                </Form.Item>
+              </>
+            )}
 
-          <Form.Item>
-            <Button 
-              type="primary" 
-              onClick={handleSubmit} 
-              disabled={!selectedProduct.isEcommerce && selectedPieces.length === 0}
-            >
-              Add to Transfer
-            </Button>
-          </Form.Item>
-        </>
-      )}
+            <Form.Item>
+              <Button 
+                type="primary" 
+                onClick={handleSubmit} 
+                disabled={
+                  !selectedWarehouse || 
+                  (!selectedProduct.isEcommerce && selectedPieces.length === 0) ||
+                  (selectedProduct.isEcommerce && !quantity)
+                }
+              >
+                Add to Transfer
+              </Button>
+            </Form.Item>
+          </>
+        )}
+      </Space>
     </Form>
   );
 };

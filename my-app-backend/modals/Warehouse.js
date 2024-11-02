@@ -1,6 +1,19 @@
 const mongoose = require('mongoose');
 
 const warehouseSchema = new mongoose.Schema({
+  modelUrl: {
+    type: String,
+    default: null
+  },
+  modelType: {
+    type: String,
+    enum: ['gltf', 'glb', null],
+    default: null
+  },
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  },
   name: {
     type: String,
     required: true,

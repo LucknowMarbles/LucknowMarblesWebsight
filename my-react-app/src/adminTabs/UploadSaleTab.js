@@ -8,12 +8,15 @@ import AddressForm from '../components/AddressForm';
 import EcommerceProductForm from '../components/EcommerceForm';
 import EnquiryProductForm from '../components/EnquiryProductForm'; // Add this import
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import EnquirySelector from '../components/EnquirySelector';
 
 const { Option } = Select;
 
 function UploadSaleTab() {
+  const indexProduct = 0; 
   const [saleEntryMethod, setSaleEntryMethod] = useState('excel');
   const [manualSaleData, setManualSaleData] = useState({
+    invoiceNumber: '',
     customerId: '',
     shippingAddress: {
       street: '',
@@ -96,8 +99,11 @@ function UploadSaleTab() {
   };
 
   const handleAddProduct = () => {
-    setSaleItems([...saleItems, { productId: null, isEcommerce: false, quantity: 1, pieces: [] }]);
+    setSaleItems([...saleItems, { productId: null, isEcommerce: false, quantity: 1, pieces: [], batch: null }]);
   };
+  const handleAddProductAuto = (productId, isEcommerce, quantity, pieces, batch) => {
+    setSaleItems([...saleItems, { productId: productId, isEcommerce: isEcommerce, quantity: quantity, pieces: pieces, batch: batch }]);
+    };
 
   const handleRemoveProduct = (index) => {
     const newSaleItems = [...saleItems];
@@ -137,16 +143,16 @@ function UploadSaleTab() {
     fetchPieces(value);
   };
 
-  const handlePieceSelect = (pieceId, checked, index) => {
+  const handlePieceSelect = (piece, checked, index) => {
     const newSaleItems = [...saleItems];
     if (checked) {
-      newSaleItems[index].pieces.push({ pieceId, saleLength: 0, saleWidth: 0, saleAreaPerPiece: 0, pricePerUnitArea: 0 });
+      newSaleItems[index].pieces.push({ pieceId: piece._id, pieceNo: piece.pieceNo, saleLength: piece.customerLength, saleWidth: piece.customerWidth, saleAreaPerPiece: piece.customerLength*piece.customerWidth/144, pricePerUnitArea: piece.pricePerUnitArea });
     } else {
-      newSaleItems[index].pieces = newSaleItems[index].pieces.filter(piece => piece.pieceId !== pieceId);
+      newSaleItems[index].pieces = newSaleItems[index].pieces.filter(piece => piece.pieceId !== piece._id);
     }
     setSaleItems(newSaleItems);
   };
-
+  /*
   const handlePieceLengthChange = (pieceId, value, index) => {
     const newSaleItems = [...saleItems];
     const piece = newSaleItems[index].pieces.find(p => p.pieceId === pieceId);
@@ -166,7 +172,7 @@ function UploadSaleTab() {
     }
     setSaleItems(newSaleItems);
   };
-
+*/
   const handleManualSaleDataChange = (field, value, index = null) => {
     if (index !== null) {
       setManualSaleData(prevData => {
@@ -178,7 +184,7 @@ function UploadSaleTab() {
       setManualSaleData(prevData => ({ ...prevData, [field]: value }));
     }
   };
-
+  
   const addSaleItem = () => {
     setManualSaleData(prevData => ({
       ...prevData,
@@ -198,6 +204,7 @@ function UploadSaleTab() {
       const token = localStorage.getItem('token');
       
       const saleData = {
+        invoiceNumber: manualSaleData.invoiceNumber,
         customer: manualSaleData.customerId,
         shippingAddress: manualSaleData.shippingAddress,
         billingAddress: sameAsBilling ? manualSaleData.shippingAddress : manualSaleData.billingAddress,
@@ -205,11 +212,12 @@ function UploadSaleTab() {
           item.isEcommerce 
             ? [{ product: item.productId, quantity: item.quantity }]
             : item.pieces.map(piece => ({
-                piece: piece.pieceId,
-                saleLength: piece.saleLength,
-                saleWidth: piece.saleWidth,
-                saleAreaPerPiece: piece.saleAreaPerPiece,
-                pricePerUnitArea: piece.pricePerUnitArea
+              pieceNo: piece.pieceNo,
+              piece: piece.pieceId,
+              saleLength: piece.saleLength,
+              saleWidth: piece.saleWidth,
+              saleAreaPerPiece:piece.saleLength*piece.saleWidth/144,
+              pricePerUnitArea: 0
               }))
         ),
         freight: manualSaleData.freight,
@@ -318,35 +326,176 @@ function UploadSaleTab() {
     setSaleItems(updatedProducts);
   };
 
+  const handleEnquirySelect = async (enquiry) => {
+    try {
+      console.log(enquiry);
+      // Set customer details
+      setManualSaleData(prevData => ({
+        ...prevData,
+        customerId: enquiry.customer._id,
+      }));
+
+      // Set addresses
+      setShippingAddress(enquiry.customer.shippingAddress || {});
+      setBillingAddress(enquiry.customer.billingAddress || {});
+      console.log(enquiry.products)
+      // Transform enquiry products to sale items
+      const transformedItems = await Promise.all(enquiry.products.map(async (product, index) => {
+        // Fetch product details to check if it's an e-commerce product
+        //handleProductChange(product.productId, index)
+        
+        handleAddProductAuto(product._id, product.isEcommerce, product.quantity || 1, 
+          product.pieces.map(piece => ({
+            pieceId: piece._id,
+            pieceNo: piece.pieceNo,
+            saleLength: piece.customerLength || 0,
+            saleWidth: piece.customerWidth || 0,
+            saleAreaPerPiece: (piece.customerLength * piece.customerWidth)/144 || 0,
+            pricePerUnitArea: 0
+          })),
+          product.selectedBatch
+        );
+      }));
+
+
+      message.success('Enquiry data loaded successfully');
+    } catch (error) {
+      console.error('Error loading enquiry data:', error);
+      message.error('Failed to load enquiry data');
+    }
+  };
+
   const columns = [
     {
-      title: 'Piece ID',
-      dataIndex: 'pieceId',
-      key: 'pieceId',
+      title: 'Piece No',
+      dataIndex: 'pieceNo',
+      key: 'pieceNo',
     },
     {
-      title: 'Sale Length',
+      title: 'Length',
       dataIndex: 'saleLength',
       key: 'saleLength',
-      render: (text, record) => (
+      render: (text, record, rowIndex) => (
         <InputNumber
+          min={0}
           value={text}
-          onChange={(value) => handlePieceLengthChange(record.pieceId, value)}
+          onChange={(value) => handlePieceLengthChange(record.pieceId, value, rowIndex)}
+          style={{ width: '100%' }}
         />
       ),
     },
     {
-      title: 'Sale Width',
+      title: 'Width',
       dataIndex: 'saleWidth',
       key: 'saleWidth',
-      render: (text, record) => (
+      render: (text, record, rowIndex) => (
         <InputNumber
+          min={0}
           value={text}
-          onChange={(value) => handlePieceWidthChange(record.pieceId, value)}
+          onChange={(value) => handlePieceWidthChange(record.pieceId, value, rowIndex)}
+          style={{ width: '100%' }}
         />
       ),
     },
+    {
+      title: 'Area (sq.ft)',
+      dataIndex: 'saleAreaPerPiece',
+      key: 'saleAreaPerPiece',
+      render: (text) => text.toFixed(2)
+    },
+    {
+      title: 'Price/sq.ft',
+      dataIndex: 'pricePerUnitArea',
+      key: 'pricePerUnitArea',
+      render: (text, record, rowIndex) => (
+        <InputNumber
+          min={0}
+          value={text}
+          onChange={(value) => handlePiecePriceChange(record.pieceId, value, rowIndex)}
+          style={{ width: '100%' }}
+          formatter={value => `₹ ${value}`}
+          parser={value => value.replace(/₹\s?|(,*)/g, '')}
+        />
+      ),
+    },
+    {
+      title: 'Total Price',
+      key: 'totalPrice',
+      render: (_, record) => (
+        <span>₹ {(record.saleAreaPerPiece * record.pricePerUnitArea).toFixed(2)}</span>
+      ),
+    }
   ];
+
+  const handlePieceLengthChange = (pieceId, value, index) => {
+    setSaleItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.pieces.some(p => p.pieceId === pieceId)) {
+          return {
+            ...item,
+            pieces: item.pieces.map(piece => {
+              if (piece.pieceId === pieceId) {
+                const newArea = (value * piece.saleWidth) / 144; // Convert to sq.ft
+                return {
+                  ...piece,
+                  saleLength: value,
+                  saleAreaPerPiece: newArea
+                };
+              }
+              return piece;
+            })
+          };
+        }
+        return item;
+      });
+    });
+  };
+
+  const handlePieceWidthChange = (pieceId, value, index) => {
+    setSaleItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.pieces.some(p => p.pieceId === pieceId)) {
+          return {
+            ...item,
+            pieces: item.pieces.map(piece => {
+              if (piece.pieceId === pieceId) {
+                const newArea = (piece.saleLength * value) / 144; // Convert to sq.ft
+                return {
+                  ...piece,
+                  saleWidth: value,
+                  saleAreaPerPiece: newArea
+                };
+              }
+              return piece;
+            })
+          };
+        }
+        return item;
+      });
+    });
+  };
+
+  const handlePiecePriceChange = (pieceId, value, index) => {
+    setSaleItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.pieces.some(p => p.pieceId === pieceId)) {
+          return {
+            ...item,
+            pieces: item.pieces.map(piece => {
+              if (piece.pieceId === pieceId) {
+                return {
+                  ...piece,
+                  pricePerUnitArea: value
+                };
+              }
+              return piece;
+            })
+          };
+        }
+        return item;
+      });
+    });
+  };
 
   return (
     <div className="upload-sale-section">
@@ -369,6 +518,12 @@ function UploadSaleTab() {
               <AddressForm onAddressChange={handleBillingAddressChange} />
             </>
           )}
+          <Form.Item label="Invoice Number">
+            <InputNumber
+              value={manualSaleData.invoiceNumber}
+              onChange={(value) => handleManualSaleDataChange('invoiceNumber', value)}
+            />
+          </Form.Item>
 
           <Form.Item label="Freight">
             <InputNumber
@@ -408,6 +563,10 @@ function UploadSaleTab() {
           />
           */}
 
+          <Form.Item label="Select Enquiry">
+            <EnquirySelector onEnquirySelect={handleEnquirySelect} />
+          </Form.Item>
+
           {saleItems.map((item, index) => (
             <div key={index}>
               <Space style={{ display: 'flex', marginBottom: 8 }} align="baseline">
@@ -418,7 +577,7 @@ function UploadSaleTab() {
                     placeholder="Select a product"
                     style={{ width: 200 }}
                   >
-                    {products.map(product => (
+                    {products.map((product) => (
                       <Option key={product._id} value={product._id}>{product.name}</Option>
                     ))}
                   </Select>
@@ -437,7 +596,7 @@ function UploadSaleTab() {
                   <>
                     <Form.Item label="Batch">
                       <Select
-                        value={selectedBatch}
+                        value={item.batchNo}
                         onChange={(value) => handleBatchChange(value, index)}
                         placeholder="Select a batch"
                         disabled={!item.productId}
@@ -454,7 +613,7 @@ function UploadSaleTab() {
                         {availablePieces.map(piece => (
                           <Checkbox
                             key={piece._id}
-                            onChange={(e) => handlePieceSelect(piece._id, e.target.checked, index)}
+                            onChange={(e) => handlePieceSelect(piece, e.target.checked, index)}
                             checked={item.pieces.some(p => p.pieceId === piece._id)}
                           >
                             {piece.pieceNo}
@@ -470,12 +629,14 @@ function UploadSaleTab() {
               </Space>
 
               {!item.isEcommerce && item.pieces.length > 0 && (
-                <Table
-                  dataSource={item.pieces}
-                  columns={columns}
-                  rowKey="pieceId"
-                  pagination={false}
-                />
+                <div style={{ marginBottom: 16 }}>
+                  <Table
+                    dataSource={item.pieces}
+                    columns={columns}
+                    rowKey="pieceId"
+                    pagination={false}
+                  />
+                </div>
               )}
             </div>
           ))}

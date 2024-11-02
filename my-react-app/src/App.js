@@ -11,6 +11,7 @@ import ShoppingCart from './pages/ShoppingCart';
 import CustomerOrders from './pages/CustomerOrders';
 import { GOOGLE_MAPS_LIBRARIES, REACT_APP_GOOGLE_MAPS_API_KEY } from './cridentials';
 import { LoadScript } from '@react-google-maps/api';
+import WarehousesTab from './pages/WarehousesTab';
 console.log(REACT_APP_GOOGLE_MAPS_API_KEY)
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <Router>
         <Navbar cart={cart} />
         <Routes>
+          <Route path="/warehouses" element={<WarehousesTab />} />
           <Route path="/" element={<HomePage cart={cart} setCart={setCart} />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/profile" element={<ProfilePage />} />
