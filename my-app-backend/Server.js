@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+const path = require('path');
 const userRoutes = require('./routes/user');
 const productRoutes = require('./routes/Product'); // Import product routes
 const enquiryRoutes = require('./routes/Enquiry');
@@ -21,10 +22,10 @@ const session = require('express-session');
 
 
 // Enable CORS for all routes
-const corsOptions = {
-  origin: 'http://localhost:3000', // Allow only this origin
-  credentials: true, // Allow cookies to be sent with requests
-};
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'https://lucknowmarbles.co.in',
+  credentials: true
+}));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: true,
@@ -51,6 +52,7 @@ app.use((req, res, next) => {
   });
   next();
 });
+app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB (replace with your connection string)
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })

@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "build": "npm install",
+    "dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
@@ -23,5 +26,8 @@
     "read-excel-file": "^5.8.6",
     "twilio": "^5.3.3",
     "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
