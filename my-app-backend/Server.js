@@ -82,5 +82,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Important: Use the PORT environment variable
+const port = process.env.PORT || 8080;
+
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
+// Log when server starts
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
