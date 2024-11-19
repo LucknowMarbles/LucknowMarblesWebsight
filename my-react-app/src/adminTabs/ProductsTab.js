@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Form, Input, InputNumber, Upload, Select, Switch, Button, message } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { UploadOutlined, LoadingOutlined} from '@ant-design/icons';
 import AIContentGenerator from '../components/AIContentGenerator';
 
 const { TextArea } = Input;
@@ -10,6 +10,8 @@ const { Option } = Select;
 function ProductsTab() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [uploadLoading, setUploadLoading] = useState(false);
 
   const handleAIContent = (contentType, content) => {
     switch (contentType) {
@@ -34,23 +36,64 @@ function ProductsTab() {
         }
         break;
       case 'features':
+         {
         form.setFieldsValue({ features: content });
         break;
+      }
+    }
+  };
+
+  const handleImageUpload = async ({ file, onSuccess, onError }) => {
+    setUploadLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await axios.post(
+        'http://localhost:5001/api/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      setImageUrl(response.data.imageUrl);
+      form.setFieldsValue({ imageUrl: response.data.imageUrl });
+      onSuccess("ok");
+      message.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      message.error('Failed to upload image');
+      onError(error);
+    } finally {
+      setUploadLoading(false);
     }
   };
 
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5001/api/products', values, {
-        headers: { Authorization: `Bearer ${token}` },
+      if (!imageUrl) {
+        throw new Error('Please upload an image');
+      }
+
+      const productData = {
+        ...values,
+        imageUrl
+      };
+
+      await axios.post('http://localhost:5001/api/products', productData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+
       message.success('Product added successfully');
       form.resetFields();
+      setImageUrl('');
     } catch (error) {
       console.error('Error adding product:', error);
-      message.error('Failed to add product');
+      message.error(error.message || 'Failed to add product');
     } finally {
       setLoading(false);
     }
@@ -116,13 +159,27 @@ function ProductsTab() {
               rules={[{ required: true, message: 'Please upload an image' }]}
             >
               <Upload
-                name="image"
-                listType="picture"
+                customRequest={handleImageUpload}
+                accept="image/*"
                 maxCount={1}
-                action="http://localhost:5001/api/upload"
-                headers={{ Authorization: `Bearer ${localStorage.getItem('token')}` }}
+                listType="picture-card"
+                showUploadList={false}
+                className="w-full"
               >
-                <Button icon={<UploadOutlined />}>Upload Image</Button>
+                {imageUrl ? (
+                  <img 
+                    src={imageUrl} 
+                    alt="Product" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                ) : (
+                  <div>
+                    {uploadLoading ? <LoadingOutlined /> : <UploadOutlined />}
+                    <div style={{ marginTop: 8 }}>
+                      {uploadLoading ? 'Uploading...' : 'Upload'}
+                    </div>
+                  </div>
+                )}
               </Upload>
             </Form.Item>
 

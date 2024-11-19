@@ -1,0 +1,44 @@
+runtime: nodejs20
+env: standard
+instance_class: F1
+
+env_variables:
+  NODE_ENV: "production"
+  JWT_SECRET: "1234"
+  MONGODB_URI: "mongodb://localhost/your_database"
+  LINKEDIN_YOUR_CLIENT_ID: "77j380nmh3frhn"
+  LINKEDIN_YOUR_CLIENT_SECRET: "WPL_AP1.ogbdEGW9aWBB"
+  INSTAGRAM_ACCESS_TOKEN: "your_instagram_access_token"
+  FACEBOOK_ACCESS_TOKEN: "your_facebook_access_token"
+  TWITTER_API_KEY: "your_twitter_api_key"
+  TWITTER_API_SECRET: "your_twitter_api_secret"
+  CLIENT_SECRET: "b8f5d820fbb5529a8df9c67a36b7bb3be215c98b"
+  OPENAI_API_KEY: "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"
+  GOOGLE_CLIENT_ID: "807803722588-8ig3updntn51i06knb4qlu1b956bu3ar.apps.googleusercontent.com"
+  GOOGLE_CLIENT_SECRET: "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"
+  FRONTEND_REDIRECT_URI: "http://localhost:3000/admin/calendar/callback"
+  GOOGLE_REDIRECT_URI: "http://localhost:8080/api/calendar/auth-callback"
+  EMAIL_HOST: "smtp.gmail.com"
+  EMAIL_PORT: "587"
+  EMAIL_SECURE: "false"
+  EMAIL_USER: "info@lucknowmarbles.com"
+  EMAIL_PASS: "lmi1991lko"
+  EMAIL_FROM: "Lucknow Marbles <info@lucknowmarbles.com>"
+  PORT: "8080"
+  REACT_APP_GOOGLE_MAPS_API_KEY: "AIzaSyCsNh45zRUdhDiJTYblG4vw5gAtWlbTf_4"
+  REACT_APP_BACKEND_URL: "http://localhost:8080"
+  FRONTEND_URL: "http://lucknowmarbles.co.in"
+
+  SESSION_SECRET="nswiwj2345"
+  REACT_APP_GOOGLE_CLIENT_ID="807803722588-8ig3updntn51i06knb4qlu1b956bu3ar.apps.googleusercontent.com"
+
+
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 1
+  max_instances: 10
+
+handlers:
+  - url: /.*
+    script: auto
+    secure: always 

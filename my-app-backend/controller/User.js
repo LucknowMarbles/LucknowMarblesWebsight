@@ -62,6 +62,7 @@
    const loginUser = async (req, res) => {
     const { email, password } = req.body;
     try {
+      console.log(email, password);
       const customer = await Customer.findOne({ email });
       if (!customer) {
         return res.status(400).json({ error: 'Invalid email or password' });

@@ -1,4 +1,4 @@
-const Product = require('../modals/Product'); // Note: Changed 'modals' to 'models'
+const Product = require('../modals/Product');
 const { postToSocialMedia } = require('./postToSocialMedia');
 
 const getProducts = async (req, res) => {
@@ -27,9 +27,7 @@ const getProductById = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, quantity, imageUrl, category, tags, isEcommerce, longitude, latitude } = req.body;
-
-    const newProduct = new Product({
+    const {
       name,
       description,
       price,
@@ -38,29 +36,79 @@ const createProduct = async (req, res) => {
       category,
       tags,
       isEcommerce,
-      location: {
-        type: 'Point',
-        coordinates: [longitude, latitude]
-      }
+      metaTitle,
+      metaDescription,
+      warehouseQuantities
+    } = req.body;
+
+    const newProduct = new Product({
+      name,
+      description,
+      price,
+      quantity,
+      imageUrl,
+      category,
+      tags: Array.isArray(tags) ? tags : [],
+      isEcommerce: Boolean(isEcommerce),
+      metaTitle,
+      metaDescription,
+      warehouseQuantities: Array.isArray(warehouseQuantities) ? warehouseQuantities : []
     });
 
     const savedProduct = await newProduct.save();
     await postToSocialMedia(savedProduct);
     res.status(201).json(savedProduct);
-  } catch (err) {
-    console.error('Error creating product:', err);
-    res.status(500).json({ message: 'Failed to create product', error: err.message });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ 
+      error: 'Failed to create product', 
+      details: error.message 
+    });
   }
 };
 
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!product) {
+    const {
+      name,
+      description,
+      price,
+      quantity,
+      imageUrl,
+      category,
+      tags,
+      isEcommerce,
+      metaTitle,
+      metaDescription,
+      warehouseQuantities
+    } = req.body;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        description,
+        price,
+        quantity,
+        imageUrl,
+        category,
+        tags: Array.isArray(tags) ? tags : [],
+        isEcommerce: Boolean(isEcommerce),
+        metaTitle,
+        metaDescription,
+        warehouseQuantities: Array.isArray(warehouseQuantities) ? warehouseQuantities : [],
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    res.json(product);
+
+    res.json(updatedProduct);
   } catch (error) {
+    console.error('Error updating product:', error);
     res.status(400).json({ error: error.message });
   }
 };

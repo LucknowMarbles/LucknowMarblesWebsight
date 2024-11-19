@@ -18,13 +18,13 @@ const createAdminUser = async () => {
     }
 
     // Create admin customer
+    
     const adminCustomer = new Customer({
-      username: 'Admin',
-      email: 'admin@example.com',
-      phoneNumber: '1234567890'
+      username: 'Admin123',
+      email: 'admin@example123.com',
+      phoneNumber: '1234567892'
     });
     await adminCustomer.save();
-
     // Create admin user
     const adminUser = new User({
       customer: adminCustomer._id,

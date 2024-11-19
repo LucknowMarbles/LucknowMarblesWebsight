@@ -18,12 +18,13 @@ const aiRoutes = require('./routes/ai');
 const calendarRoutes = require('./routes/calendar');
 const app = express();
 const session = require('express-session');
+const uploadRoutes = require('./routes/upload');
 
 
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://lucknowmarbles.co.in',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 app.use(session({
@@ -72,6 +73,7 @@ app.use('/api/transfers', transferRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -82,14 +84,29 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Important: Use the PORT environment variable
-const port = process.env.PORT || 8080;
+// Parse port from environment variable
+const port = parseInt(process.env.PORT) || 5001;
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+// Add health check endpoint
+app.get('/_health', (req, res) => {
+  res.status(200).send('OK');
 });
 
-// Log when server starts
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+// Main route
+app.get('/', (req, res) => {
+  res.send('Hello from Cloud Run!');
+});
+
+// Listen on all network interfaces
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server listening on port ${port}`);
+}).on('error', (err) => {
+  console.error('Server error:', err);
+  process.exit(1);
+});
+
+// Handle shutdown gracefully
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received');
+  process.exit(0);
 });

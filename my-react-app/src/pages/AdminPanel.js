@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../AdminPanal.css';
 import PiecesTab from '../adminTabs/PiecesTab';
@@ -94,12 +94,29 @@ function AdminPanel() {
 
   return (
     <div className="admin-panel">
-        <header className="admin-header">
-          <button className="sidebar-toggle" onClick={toggleSidebar}>
-            {sidebarOpen ? <FaTimes /> : <FaBars />}
-          </button>
-          <h1>Admin Panel</h1>
-        </header>
+      {/* Admin Navbar */}
+      <nav className="admin-top-nav">
+        <div className="admin-nav-content">
+          <div className="admin-nav-left">
+            <Link to="/" className="admin-nav-link">Home</Link>
+          </div>
+          <div className="admin-nav-center">
+            <h1>Admin Dashboard</h1>
+          </div>
+          <div className="admin-nav-right">
+            <Link to="/login" className="admin-nav-link">Login</Link>
+            <Link to="/signup" className="admin-nav-link signup">Sign Up</Link>
+            <Link to="/logout" className="admin-nav-link logout">Logout</Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Sidebar Toggle and Content */}
+      <div className="admin-main-content">
+        <button className="sidebar-toggle" onClick={toggleSidebar}>
+          {sidebarOpen ? <FaTimes /> : <FaBars />}
+        </button>
+        
         <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
           <nav className="admin-nav">
             {tabs.map((tab) => (
@@ -116,25 +133,7 @@ function AdminPanel() {
             ))}
           </nav>
         </div>
-        <main className="admin-content">
-          {activeTab === 'transfer' && <TransferTab />}
-          {activeTab === 'pieces' && <PiecesTab />}
-          {activeTab === 'users' && <UsersTab />}
-          {activeTab === 'products' && <ProductsTab />}
-          {activeTab === 'orders' && <OrdersTab />}
-          {activeTab === 'enquiries' && <EnquiriesTab />}
-          {activeTab === 'uploadPurchase' && <PurchaseForm />}
-          {activeTab === 'uploadSale' && <UploadSaleTab />}
-          {activeTab === 'calendar' && <CalendarTab />}
-          {activeTab === 'saleData'&& <SaleTab />}
-          {activeTab === 'warehouse' && <CreateWarehouse />}
-          {activeTab === 'createTransaction' && <CreateTransactionTab />}
-          {activeTab === 'transactionReport' && <TransactionReportTab />}
-          {activeTab === 'tasks' && <TasksPage />}
-          {activeTab === 'createTask' && <CreateTaskPage />}
-          {activeTab === 'displayPurchases' && <DisplayPurchases />}
-          {activeTab === 'warehouseModelUpload' && <WarehouseModelUpload />}
-        </main>
+      </div>
     </div>
   );
 }
